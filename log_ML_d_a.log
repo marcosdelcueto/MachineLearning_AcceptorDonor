@@ -1,49 +1,36 @@
-ML, 'SVR' 
+ML, 'kNN' 
 Neighbors, 3 
 alpha, 1.0 
 gamma1, 1.0 
 gamma2, 1.0 
 gamma3, 1.0 
-optimize_hyperparams, True 
+optimize_hyperparams, False 
 alpha_lim, (0.0, 2.0) 
 gamma_lim1, (0.0, 2.0) 
 gamma_lim2, (0.0, 6.0) 
 gamma_lim3, (0.0, 6.0) 
-input_file, 'db_new_short.csv' 
+input_file, 'db_new.csv' 
 elec_descrip, 5 
 xcols, ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","SMILES-DFP","SMILES-AFP"] 
 ycols, [ "PCE" ] 
-Ndata, 16 
+Ndata, 566 
 print_log, True 
 log_name, 'log_ML_d_a.log' 
 NCPU, 1 
+FP_length, 2048 
+weight_RMSE, True 
 X: 
-[[-0.92888785 -1.54210852  0.2441179  ...  0.          0.
+[[-1.25693716 -1.5224798  -0.11728738 ...  0.          0.
    0.        ]
- [-0.92888785 -1.54210852  0.82291357 ...  0.          0.
+ [-1.25693716 -1.5224798   0.50016615 ...  0.          0.
    0.        ]
- [-0.03198393 -0.99803764  0.82291357 ...  0.          0.
+ [-0.17343665 -1.08271123  0.50016615 ...  0.          0.
    0.        ]
  ...
- [ 1.14380634  1.80745457  0.82291357 ...  0.          0.
+ [ 0.69990564 -0.04784599 -2.19016706 ...  0.          0.
    0.        ]
- [ 1.02940878  1.54960876  0.82291357 ...  0.          0.
+ [-0.64608819 -0.25560551 -3.40407228 ...  0.          0.
    0.        ]
- [ 0.96916391  0.99013199  0.82291357 ...  0.          0.
+ [-0.19388006 -0.03277196 -4.4079593  ...  0.          0.
    0.        ]] 
 Entries for each a/d pair: 4101 
-New SVR call: 
-gamma1: 1.541311, gamma2: 1.791631 gamma3: 1.733407, r k-NN: -0.309565, rmse k-NN: 2.016239 
-alpha: {'C': 1.0, 'cache_size': 200, 'coef0': 0.0, 'degree': 3, 'epsilon': 0.1, 'gamma': 'scale', 'kernel': functools.partial(<function kernel_SVR at 0xa36ae854>, gamma1=1.541310803456131, gamma2=1.7916314054241504, gamma3=1.7334074124420296), 'max_iter': -1, 'shrinking': True, 'tol': 0.001, 'verbose': False} 
-New SVR call: 
-gamma1: 0.520883, gamma2: 1.715065 gamma3: 5.115411, r k-NN: -0.302952, rmse k-NN: 2.035001 
-alpha: {'C': 1.0, 'cache_size': 200, 'coef0': 0.0, 'degree': 3, 'epsilon': 0.1, 'gamma': 'scale', 'kernel': functools.partial(<function kernel_SVR at 0xa36ae854>, gamma1=0.5208829932068719, gamma2=1.7150645443710575, gamma3=5.115411203951728), 'max_iter': -1, 'shrinking': True, 'tol': 0.001, 'verbose': False} 
-New SVR call: 
-gamma1: 1.584458, gamma2: 0.601796 gamma3: 2.128160, r k-NN: -0.306435, rmse k-NN: 2.016298 
-alpha: {'C': 1.0, 'cache_size': 200, 'coef0': 0.0, 'degree': 3, 'epsilon': 0.1, 'gamma': 'scale', 'kernel': functools.partial(<function kernel_SVR at 0xa36ae854>, gamma1=1.5844583217221917, gamma2=0.6017957979097619, gamma3=2.128160480705878), 'max_iter': -1, 'shrinking': True, 'tol': 0.001, 'verbose': False} 
-New SVR call: 
-gamma1: 1.667034, gamma2: 3.729433 gamma3: 4.311444, r k-NN: -0.322822, rmse k-NN: 2.004710 
-alpha: {'C': 1.0, 'cache_size': 200, 'coef0': 0.0, 'degree': 3, 'epsilon': 0.1, 'gamma': 'scale', 'kernel': functools.partial(<function kernel_SVR at 0xa36ae854>, gamma1=1.6670337524542986, gamma2=3.729432953925212, gamma3=4.311443974518238), 'max_iter': -1, 'shrinking': True, 'tol': 0.001, 'verbose': False} 
-New SVR call: 
-gamma1: 1.699584, gamma2: 4.567393 gamma3: 1.490346, r k-NN: -0.324876, rmse k-NN: 2.008501 
-alpha: {'C': 1.0, 'cache_size': 200, 'coef0': 0.0, 'degree': 3, 'epsilon': 0.1, 'gamma': 'scale', 'kernel': functools.partial(<function kernel_SVR at 0xa36ae854>, gamma1=1.6995838538272714, gamma2=4.567393134223538, gamma3=1.4903459154096268), 'max_iter': -1, 'shrinking': True, 'tol': 0.001, 'verbose': False} 

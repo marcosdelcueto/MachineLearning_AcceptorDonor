@@ -46,7 +46,7 @@ def main(alpha,gamma1,gamma2,gamma3,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3):
         X_a=[]
         X1=X[i][elec_descrip][1:-1].split()
         X2=X[i][elec_descrip+1][1:-1].split()
-        for j in range(2048):
+        for j in range(FP_length):
             X_d.append(int(float(X1[j])))
             X_a.append(int(float(X2[j])))
         X[i][elec_descrip]=X_d
@@ -194,10 +194,12 @@ def read_initial_values(inp):
     elec_descrip = ast.literal_eval(var_value[var_name.index('elec_descrip')])# number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
     xcols = ast.literal_eval(var_value[var_name.index('xcols')])              # specify which descriptors are used
     ycols = ast.literal_eval(var_value[var_name.index('ycols')])              # specify which is target property
-    Ndata = ast.literal_eval(var_value[var_name.index('Ndata')])         # number of d/a pairs
-    print_log = ast.literal_eval(var_value[var_name.index('print_log')])# choose whether information is also written into a log file (Default: True)
-    log_name = ast.literal_eval(var_value[var_name.index('log_name')])   # name of log file
-    NCPU = ast.literal_eval(var_value[var_name.index('NCPU')])	    # select number of CPUs (-1 means all CPUs in a node)
+    Ndata = ast.literal_eval(var_value[var_name.index('Ndata')])              # number of d/a pairs
+    print_log = ast.literal_eval(var_value[var_name.index('print_log')])      # choose whether information is also written into a log file (Default: True)
+    log_name = ast.literal_eval(var_value[var_name.index('log_name')])        # name of log file
+    NCPU = ast.literal_eval(var_value[var_name.index('NCPU')])	              # select number of CPUs (-1 means all CPUs in a node)
+    FP_length = ast.literal_eval(var_value[var_name.index('FP_length')])      # select number of CPUs (-1 means all CPUs in a node)
+    weight_RMSE = ast.literal_eval(var_value[var_name.index('weight_RMSE')])  # select number of CPUs (-1 means all CPUs in a node)
     # open log file to write intermediate information
     if print_log==True:
         f_out = open('%s' %log_name,'w')
@@ -206,7 +208,7 @@ def read_initial_values(inp):
     for i in range(len(input_info)):
         if print_log==True: f_out.write('%s, %s \n' % (str(input_info[i].split('=')[0].strip()), str(input_info[i].split('=')[1].strip())))
     #print(ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out)
-    return (ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out)
+    return (ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE)
 
 ### Preprocess function to scale data ###
 def preprocess_fn(X):
@@ -246,8 +248,8 @@ def custom_distance(X1,X2,gamma1,gamma2,gamma3):
         d_el = d_el + (X1[i]-X2[i])**2
     d_el = d_el**(1.0/2.0)
     # Calculate distances for FP
-    ndesp1 = elec_descrip + 2048
-    ndesp2 = elec_descrip + 2048 + 2048
+    ndesp1 = elec_descrip + FP_length
+    ndesp2 = elec_descrip + FP_length + FP_length
     T_d = ( np.dot(np.transpose(X1[elec_descrip:ndesp1]),X2[elec_descrip:ndesp1]) ) / ( np.dot(np.transpose(X1[elec_descrip:ndesp1]),X1[elec_descrip:ndesp1]) + np.dot(np.transpose(X2[elec_descrip:ndesp1]),X2[elec_descrip:ndesp1]) - np.dot(np.transpose(X1[elec_descrip:ndesp1]),X2[elec_descrip:ndesp1]) )
     T_a = ( np.dot(np.transpose(X1[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) ) / ( np.dot(np.transpose(X1[ndesp1:ndesp2]),X1[ndesp1:ndesp2]) + np.dot(np.transpose(X2[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) - np.dot(np.transpose(X1[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) )
     d_fp_d = 1 - T_d
@@ -297,8 +299,12 @@ def kNN(hyperparams,X,y,condition,gammas):
     y_real_knn_list_list = [item for caca in y_real_knn_list for item in caca ]
     y_predicted_knn_list_list = [item for caca in y_predicted_knn_list for item in caca ]
     # Calculate rmse and r
+    if weight_RMSE == True:
+        weights = y_real_knn_list_list**2 / np.linalg.norm(y_real_knn_list_list**2)
+    else:
+        weights = np.ones_like(y_real_knn_list_list)
     r_knn, _ = pearsonr(y_real_knn_list_list, y_predicted_knn_list_list)
-    rms_knn  = sqrt(mean_squared_error(y_real_knn_list_list, y_predicted_knn_list_list))
+    rms_knn  = sqrt(mean_squared_error(y_real_knn_list_list, y_predicted_knn_list_list,sample_weight=weights))
     print('New k-NN call:')
     print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r k-NN:', r_knn.tolist(), 'rmse k-NN:',rms_knn,flush=True)
     if print_log==True: f_out.write('New k-NN call: \n')
@@ -354,8 +360,12 @@ def KRR(hyperparams,X,y,condition,gammas):
     y_real_krr_list_list = [item for caca in y_real_krr_list for item in caca ]
     y_predicted_krr_list_list = [item for caca in y_predicted_krr_list for item in caca ]
     # Calculate rmse and r
+    if weight_RMSE == True:
+        weights = y_real_krr_list_list**2 / np.linalg.norm(y_real_krr_list_list**2)
+    else:
+        weights = np.ones_like(y_real_krr_list_list)
     r_KRR, _ = pearsonr(y_real_krr_list_list, y_predicted_krr_list_list)
-    rms_KRR  = sqrt(mean_squared_error(y_real_krr_list_list, y_predicted_krr_list_list))
+    rms_KRR  = sqrt(mean_squared_error(y_real_krr_list_list, y_predicted_krr_list_list,sample_weight=weights))
     print('New KRR call:')
     print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r KRR:', r_KRR, 'rmse KRR:',rms_KRR,flush=True)
     print('alpha:',krr.get_params(),flush=True)
@@ -390,7 +400,7 @@ def func_SVR(hyperparams,X,y,condition,gammas):
         print('Step',counter," / ", Ndata,flush=True)
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
-        svr = SVR(C=1.0,kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3))
+        svr = SVR(kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3))
         # Train model
         svr.fit(X_train, y_train.ravel())
         y_pred_svr = svr.predict(X_test)
@@ -407,8 +417,12 @@ def func_SVR(hyperparams,X,y,condition,gammas):
     y_real_svr_list_list = [item for caca in y_real_svr_list for item in caca ]
     y_predicted_svr_list_list = [item for caca in y_predicted_svr_list for item in caca ]
     # Calculate rmse and r
+    if weight_RMSE == True:
+        weights = y_real_svr_list_list**2 / np.linalg.norm(y_real_svr_list_list**2)
+    else:
+        weights = np.ones_like(y_real_svr_list_list)
     r_SVR, _ = pearsonr(y_real_svr_list_list, y_predicted_svr_list_list)
-    rms_SVR  = sqrt(mean_squared_error(y_real_svr_list_list, y_predicted_svr_list_list))
+    rms_SVR  = sqrt(mean_squared_error(y_real_svr_list_list, y_predicted_svr_list_list,sample_weight=weights))
     print('New SVR call:')
     print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r SVR:', r_SVR, 'rmse SVR:',rms_SVR,flush=True)
     print('SVR parameters:',svr.get_params(),flush=True)
@@ -420,7 +434,7 @@ def func_SVR(hyperparams,X,y,condition,gammas):
 
 ### SVR kernel function
 def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
-    ndesp1 = elec_descrip + 2048
+    ndesp1 = elec_descrip + FP_length
     K_el   = 1.0
     K_fp_d = 1.0
     K_fp_a = 1.0
@@ -447,13 +461,13 @@ def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
         # define Xi_fp_d
         Xi_fp_d = [[] for j in range(size_matrix1)]
         for i in range(size_matrix1):
-            for j in range(2048):
+            for j in range(FP_length):
                 Xi_fp_d[i].append(_x1[i][j+elec_descrip])
         Xi_fp_d = np.array(Xi_fp_d)
         # define Xj_fp_d
         Xj_fp_d = [[] for j in range(size_matrix2)]
         for i in range(size_matrix2):
-            for j in range(2048):
+            for j in range(FP_length):
                 Xj_fp_d[i].append(_x2[i][j+elec_descrip])
         Xj_fp_d = np.array(Xj_fp_d)
         # calculate K_fp_d
@@ -468,13 +482,13 @@ def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
         # define Xi_fp_a
         Xi_fp_a = [[] for j in range(size_matrix1)]
         for i in range(size_matrix1):
-            for j in range(2048):
+            for j in range(FP_length):
                 Xi_fp_a[i].append(_x1[i][j+elec_descrip])
         Xi_fp_a = np.array(Xi_fp_a)
         # define Xj_fp_a
         Xj_fp_a = [[] for j in range(size_matrix2)]
         for i in range(size_matrix2):
-            for j in range(2048):
+            for j in range(FP_length):
                 Xj_fp_a[i].append(_x2[i][j+elec_descrip])
         Xj_fp_a = np.array(Xj_fp_a)
         # calculate K_fp_a
@@ -584,18 +598,14 @@ def build_hybrid_kernel(gamma1,gamma2,gamma3):
         K: np.array.
             Kernel matrix element.
         '''
-
         # Split electronic data from fingerprints
-        # fingerprint vectors (2048) is hardcoded
-        ndesp1 = elec_descrip + 2048
+        ndesp1 = elec_descrip + FP_length
         Xi_el = _x1[:elec_descrip].reshape(1,-1)
         Xi_fp_d = _x1[elec_descrip:ndesp1].reshape(1,-1)
         Xi_fp_a = _x1[ndesp1:].reshape(1,-1)
-
         Xj_el = _x2[:elec_descrip].reshape(1,-1)
         Xj_fp_d = _x2[elec_descrip:ndesp1].reshape(1,-1)
         Xj_fp_a = _x2[ndesp1:].reshape(1,-1)
-
         # Compute kernels separately
         K_el = 1.0
         K_fp_d = 1.0
@@ -603,16 +613,11 @@ def build_hybrid_kernel(gamma1,gamma2,gamma3):
         if gamma1 != 0.0: K_el = gaussian_kernel(Xi_el, Xj_el, gamma1)
         if gamma2 != 0.0: K_fp_d = tanimoto_kernel(Xi_fp_d, Xj_fp_d, gamma2)
         if gamma3 != 0.0: K_fp_a = tanimoto_kernel(Xi_fp_a, Xj_fp_a, gamma3)
-
         # Element-wise multiplication
         K = K_el * K_fp_d * K_fp_a
-        #K = K_el
-
         return K
 
     return hybrid_kernel
-
-
 
 #### Function to get FP from smiles (not used) ###
 #def preprocess_smiles(X):
@@ -695,7 +700,7 @@ def build_hybrid_kernel(gamma1,gamma2,gamma3):
 ### Run main program ###
 start = time()
 # Read input values
-(ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out) = read_initial_values(input_file_name)
+(ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE) = read_initial_values(input_file_name)
 # Execute main function
 main(alpha,gamma1,gamma2,gamma3,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3)
 # Print running time and close log file
