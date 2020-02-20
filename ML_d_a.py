@@ -3,6 +3,7 @@
 # Department of Chemistry and MIF, University of Liverpool
 #################################################################################
 import sys
+import ast
 import math
 import functools
 import numpy as np
@@ -26,37 +27,16 @@ from sklearn.neighbors import KNeighborsRegressor, DistanceMetric
 #from rdkit import Chem, DataStructs
 #from rdkit.Chem import rdMolDescriptors
 #################################################################################
-######## START CUSTOMIZABLE PARAMETERS ########
-ML='SVR'                    	# 'kNN' or 'KRR' or 'SVR'
-Neighbors=3                 	# number of nearest-neighbors (only used for kNN)
-alpha=1.0                   	# kernel hyperparameter (only used for KRR)
-gamma1=1.0                  	# hyperparameter with weight of d_el
-gamma2=1.0                  	# hyperparameter with weight of d_fp_d
-gamma3=1.0                  	# hyperparameter with weight of d_fp_a
-optimize_hyperparams=False  	# whether hyperparameters are optimized (True) or just use initial values (False). If hyperparam=0.0, then that hyperparam is not optimized anyway
-alpha_lim  = (0.0, 2.0)         # range in which alpha hyperparam is optimized (only used for KRR)
-gamma_lim1 = (0.0, 2.0)		# range in which gamma1 is optimized
-gamma_lim2 = (0.0, 6.0)         # range in which gamma1 is optimized
-gamma_lim3 = (0.0, 6.0)         # range in which gamma1 is optimized
-input_file='db_new-2.csv'       # name of input file with database
-elec_descrip = 5		# number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
-#xcols=["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","sum of f-D","XLOGP3-D","sum of f-A","XLOGP3-A","SMILES-DFP","SMILES-AFP"]      # specify which descriptors are used
-xcols=["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","SMILES-DFP","SMILES-AFP"]      # specify which descriptors are used
-#xcols=["HOMO-D","LL+1-D","Efund-D","Ebind-D","sum of f-D","transition DM-D","Rot. Bonds-D","XLOGP3-D","E(T1)-scf-D","SMILES-DFP","SMILES-AFP"]     # specify which descriptors are used
-ycols = [ "PCE" ]           	# specify which is target property
-Ndata = 566                 	# number of d/a pairs
-print_log = True		# choose whether information is also written into a log file (Default: True)
-log_name = 'log_ML_d_a.log'	# name of log file
-NCPU=8				# select number of CPUs (-1 means all CPUs in a node)
+####### START CUSTOMIZABLE PARAMETERS #######
+input_file_name = 'input_ML_d_a.txt'  # name of input file
 ######## END CUSTOMIZABLE PARAMETERS ########
 #################################################################################
 
 #################################################################################
 ###### START MAIN ######
 def main(alpha,gamma1,gamma2,gamma3,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3):
-    #Read data
+    # Read data
     df=pd.read_csv(input_file,index_col=0)
-
     # Preprocess data
     #df=preprocess_smiles(df) (not needed, we're reading directly FP)
     X=df[xcols].values
@@ -145,7 +125,7 @@ def main(alpha,gamma1,gamma2,gamma3,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3):
                 bounds = [ gamma_lim1 ] + [gamma_lim2] + [gamma_lim3]
                 gammas =[]
                 mini_args = (X, y, condition,gammas)
-            solver = differential_evolution(SVR,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
+            solver = differential_evolution(func_SVR,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
         # Get best hyperparams
         best_hyperparams = solver.x
         best_rmse = solver.fun
@@ -172,23 +152,90 @@ def main(alpha,gamma1,gamma2,gamma3,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3):
             gammas = []
             hyperparams=[gamma1,gamma2,gamma3]
             func_SVR(hyperparams,X,y,condition,gammas)
-
 ###### END MAIN ######
 #################################################################################
 
 #################################################################################
 ###### START OTHER FUNCTIONS ######
-### Function just used to test custom metrics ###
-def mimic_minkowski(X1,X2):
-    distance=0.0
-    print('X1:',flush=True)
-    print(X1,flush=True)
-    print('X2:',flush=True)
-    print(X2,flush=True)
-    for i in range(len(X1)):
-        distance=distance+(X1[i]-X2[i])**2
-    distance=distance**(1.0/2.0)
-    return distance
+### Function reading input parameters
+def read_initial_values(inp):
+    # open input file
+    input_file_name = inp
+    f_in = open('%s' %input_file_name,'r')
+    f1 = f_in.readlines()
+    # initialize arrays
+    input_info = []
+    var_name = []
+    var_value = []
+    # read info before comments. Ignore commented lines and blank lines
+    for line in f1:
+        if not line.startswith("#") and not line.startswith("\n"): 
+            input_info.append(line.split('#',1)[0].strip())
+    # read names and values of variables
+    for i in range(len(input_info)):
+        print(input_info[i].split('=')[0].strip(), input_info[i].split('=')[1].strip())
+        var_name.append(input_info[i].split('=')[0].strip())
+        var_value.append(input_info[i].split('=')[1].strip())
+    # close input file
+    f_in.close()
+    # assign input variables    
+    ML = ast.literal_eval(var_value[var_name.index('ML')])               # 'kNN' or 'KRR' or 'SVR'
+    Neighbors = ast.literal_eval(var_value[var_name.index('Neighbors')]) # number of nearest-neighbors (only used for kNN)
+    alpha  = ast.literal_eval(var_value[var_name.index('alpha')])       # kernel hyperparameter (only used for KRR)
+    gamma1 = ast.literal_eval(var_value[var_name.index('gamma1')])     # hyperparameter with weight of d_el
+    gamma2 = ast.literal_eval(var_value[var_name.index('gamma2')])     # hyperparameter with weight of d_fp_d
+    gamma3 = ast.literal_eval(var_value[var_name.index('gamma3')])     # hyperparameter with weight of d_fp_a
+    optimize_hyperparams = ast.literal_eval(var_value[var_name.index('optimize_hyperparams')])# whether hyperparameters are optimized (T) or just use initial values (F). If hyperparam=0.0, then that one is not optimized
+    alpha_lim  = ast.literal_eval(var_value[var_name.index('alpha_lim')])     # range in which alpha hyperparam is optimized (only used for KRR)
+    gamma_lim1 = ast.literal_eval(var_value[var_name.index('gamma_lim1')])    # range in which gamma1 is optimized
+    gamma_lim2 = ast.literal_eval(var_value[var_name.index('gamma_lim2')])    # range in which gamma1 is optimized
+    gamma_lim3 = ast.literal_eval(var_value[var_name.index('gamma_lim3')])    # range in which gamma1 is optimized
+    input_file = ast.literal_eval(var_value[var_name.index('input_file')])    # name of input file with database
+    elec_descrip = ast.literal_eval(var_value[var_name.index('elec_descrip')])# number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
+    xcols = ast.literal_eval(var_value[var_name.index('xcols')])              # specify which descriptors are used
+    ycols = ast.literal_eval(var_value[var_name.index('ycols')])              # specify which is target property
+    Ndata = ast.literal_eval(var_value[var_name.index('Ndata')])         # number of d/a pairs
+    print_log = ast.literal_eval(var_value[var_name.index('print_log')])# choose whether information is also written into a log file (Default: True)
+    log_name = ast.literal_eval(var_value[var_name.index('log_name')])   # name of log file
+    NCPU = ast.literal_eval(var_value[var_name.index('NCPU')])	    # select number of CPUs (-1 means all CPUs in a node)
+    # open log file to write intermediate information
+    if print_log==True:
+        f_out = open('%s' %log_name,'w')
+    else:
+        f_out=None
+    for i in range(len(input_info)):
+        if print_log==True: f_out.write('%s, %s \n' % (str(input_info[i].split('=')[0].strip()), str(input_info[i].split('=')[1].strip())))
+    #print(ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out)
+    return (ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out)
+
+### Preprocess function to scale data ###
+def preprocess_fn(X):
+    '''
+    Function to preprocess raw data for the KRR.
+
+    Parameters
+    ----------
+    X: np.array.
+        raw data array.
+
+    Returns
+    -------
+    X: np.array.
+        processed data array.
+    '''
+    X_el=[[] for j in range(Ndata)]
+    X_fp_d=[]
+    X_fp_a=[]
+    for i in range(Ndata):
+        for j in range(elec_descrip):
+            X_el[i].append(X[i][j])
+        X_fp_d.append(X[i][elec_descrip])
+        X_fp_a.append(X[i][elec_descrip+1])
+    xscaler = StandardScaler()
+    X_el = xscaler.fit_transform(X_el)
+    X = np.c_[ X_el,X_fp_d,X_fp_a]
+
+    return X
 
 ### Function to calculate custom metric for electronic and structural properties ###
 def custom_distance(X1,X2,gamma1,gamma2,gamma3):
@@ -320,7 +367,7 @@ def KRR(hyperparams,X,y,condition,gammas):
 
 ### Function to calculate rmse and r with SVR ###
 def func_SVR(hyperparams,X,y,condition,gammas):
-    print('calling SVR function',flush=True)
+    rms_SVR=1.0
     if condition==1:
         gamma1 = gammas[0]
         gamma2, gamma3 = hyperparams
@@ -341,50 +388,24 @@ def func_SVR(hyperparams,X,y,condition,gammas):
     counter=0
     for train_index, test_index in loo.split(X, y):
         print('Step',counter," / ", Ndata,flush=True)
-        #print('train, test:',train_index,test_index,flush=True)
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
-        #svr = SVR(kernel='rbf')
-        svr = SVR(C=1.0,kernel=functools.partial(my_kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3))
-        #svr = SVR(kernel=functools.partial(my_kernel_SVR_RBF, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3))
-        #print ("croqueta 0.1")
-        #print ("croqueta 0.2")
+        svr = SVR(C=1.0,kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3))
         # Train model
-        #print('PREVIOUS TEST, X_train',flush=True)
-        #print(str(X_train),flush=True)
-        #print('PREVIOUS TEST, y_train',flush=True)
-        #print(str(y_train),flush=True)
         svr.fit(X_train, y_train.ravel())
-        #print('croqueta 1')
         y_pred_svr = svr.predict(X_test)
-        #print('croqueta 2')
-        #print('X_test: ',X_test)
-        #print('y_pred_svr: ',y_pred_svr)
-        #print('croqueta 2')
         y_predicted_svr.append(y_pred_svr.tolist())
         y_real_svr.append(y_test.tolist())
         counter=counter+1
-        #print('y_predicted_svr',y_predicted_svr)
-        #print('y_real_svr',y_real_svr)
-        #print('croqueta 3')
     # Put results together in a list
-    #print('croqueta 4')
-
-    #print('Final y_predicted_svr',y_predicted_svr)
-    #print('Final y_real_svr',y_real_svr)
     y_real_svr_list=[]
     y_predicted_svr_list=[]
     y_real_svr_list = [item for caca in y_real_svr for item in caca ]
-    #y_predicted_svr_list = [item for caca in y_predicted_svr for item in caca ]
     y_predicted_svr_list = y_predicted_svr
-    #print('Final y_predicted_svr_list',y_predicted_svr_list)
-    #print('Final y_real_svr_list',y_real_svr_list)
     y_real_svr_list_list=[]
     y_predicted_svr_list_list=[]
     y_real_svr_list_list = [item for caca in y_real_svr_list for item in caca ]
     y_predicted_svr_list_list = [item for caca in y_predicted_svr_list for item in caca ]
-    #print('Final y_predicted_svr_list_list',y_predicted_svr_list_list)
-    #print('Final y_real_svr_list_list',y_real_svr_list_list)
     # Calculate rmse and r
     r_SVR, _ = pearsonr(y_real_svr_list_list, y_predicted_svr_list_list)
     rms_SVR  = sqrt(mean_squared_error(y_real_svr_list_list, y_predicted_svr_list_list))
@@ -397,12 +418,9 @@ def func_SVR(hyperparams,X,y,condition,gammas):
     if print_log==True: f_out.flush()
     return rms_SVR
 
-def my_kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
+### SVR kernel function
+def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
     ndesp1 = elec_descrip + 2048
-    #print('test _x1', _x1)
-    #print('type(_x1)', type(_x1))
-    #print('test _x2', _x2)
-    #print('type(_x2)', type(_x2))
     K_el   = 1.0
     K_fp_d = 1.0
     K_fp_a = 1.0
@@ -410,29 +428,20 @@ def my_kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
     size_matrix1=_x1.shape[0]
     size_matrix2=_x2.shape[0]
     if gamma1 != 0.0:
-        # define Xi_el
         Xi_el = [[] for j in range(size_matrix1)]
         for i in range(size_matrix1):
             for j in range(elec_descrip):
                 Xi_el[i].append(_x1[i][j])
         Xi_el = np.array(Xi_el)
-        #print('test Xi_el:', Xi_el)
-        #print('type(Xi_el)', type(Xi_el))
-        # define Xj_el
         Xj_el = [[] for j in range(size_matrix2)]
         for i in range(size_matrix2):
             for j in range(elec_descrip):
                 Xj_el[i].append(_x2[i][j])
         Xj_el = np.array(Xj_el)
-        #print('test Xj_el:', Xj_el)
-        #print('type(Xj_el)', type(Xj_el))
         # calculate K_el
         D_el  = euclidean_distances(Xi_el, Xj_el)
-        #print('test D_el', D_el)
         D2_el = np.square(D_el)
-        #print('test D2_el', D2_el)
         K_el  = np.exp(-gamma1*D2_el)
-        #print('croqueta K_el just before return:', K_el)
     ### K_fp_d ###
     if gamma2 != 0.0:
         # define Xi_fp_d
@@ -441,27 +450,19 @@ def my_kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
             for j in range(2048):
                 Xi_fp_d[i].append(_x1[i][j+elec_descrip])
         Xi_fp_d = np.array(Xi_fp_d)
-        #print('test Xi_fp_d:', Xi_fp_d)
-        #print('type(Xi_fp_d)', type(Xi_fp_d))
         # define Xj_fp_d
         Xj_fp_d = [[] for j in range(size_matrix2)]
         for i in range(size_matrix2):
             for j in range(2048):
                 Xj_fp_d[i].append(_x2[i][j+elec_descrip])
         Xj_fp_d = np.array(Xj_fp_d)
-        #print('test Xj_fp_d:', Xj_fp_d)
-        #print('type(Xj_fp_d)', type(Xj_fp_d))
         # calculate K_fp_d
         Xii_d = np.repeat(np.linalg.norm(Xi_fp_d, axis=1, keepdims=True)**2, size_matrix2, axis=1)
         Xjj_d = np.repeat(np.linalg.norm(Xj_fp_d, axis=1, keepdims=True).T**2, size_matrix1, axis=0)
         T_d = np.dot(Xi_fp_d, Xj_fp_d.T) / (Xii_d + Xjj_d - np.dot(Xi_fp_d, Xj_fp_d.T))
-        #print('test T_d', T_d)
         D_fp_d  = 1 - T_d
-        #print('test D_fp_d', D_fp_d)
         D2_fp_d = np.square(D_fp_d)
-        #print('test D2_fp_d', D2_fp_d)
         K_fp_d = np.exp(-gamma2*D2_fp_d)
-        #print('croqueta K_fp_d just before return:', K_fp_d)
     ### K_fp_a ###
     if gamma3 != 0.0:
         # define Xi_fp_a
@@ -470,34 +471,26 @@ def my_kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
             for j in range(2048):
                 Xi_fp_a[i].append(_x1[i][j+elec_descrip])
         Xi_fp_a = np.array(Xi_fp_a)
-        #print('test Xi_fp_a:', Xi_fp_a)
-        #print('type(Xi_fp_a)', type(Xi_fp_a))
         # define Xj_fp_a
         Xj_fp_a = [[] for j in range(size_matrix2)]
         for i in range(size_matrix2):
             for j in range(2048):
                 Xj_fp_a[i].append(_x2[i][j+elec_descrip])
         Xj_fp_a = np.array(Xj_fp_a)
-        #print('test Xj_fp_a:', Xj_fp_a)
-        #print('type(Xj_fp_a)', type(Xj_fp_a))
         # calculate K_fp_a
         Xii_a = np.repeat(np.linalg.norm(Xi_fp_a, axis=1, keepdims=True)**2, size_matrix2, axis=1)
         Xjj_a = np.repeat(np.linalg.norm(Xj_fp_a, axis=1, keepdims=True).T**2, size_matrix1, axis=0)
         T_d = np.dot(Xi_fp_a, Xj_fp_a.T) / (Xii_a + Xjj_a - np.dot(Xi_fp_a, Xj_fp_a.T))
-        #print('test T_d', T_d)
         D_fp_a  = 1 - T_d
-        #print('test D_fp_a', D_fp_a)
         D2_fp_a = np.square(D_fp_a)
-        #print('test D2_fp_a', D2_fp_a)
         K_fp_a = np.exp(-gamma3*D2_fp_a)
-        #print('croqueta K_fp_a just before return:', K_fp_a)
     # Calculate final kernel
     K=K_el*K_fp_d*K_fp_a
     #K = np.exp(-gamma1*np.square(euclidean_distances(Xi_el, Xj_el)) - gamma2*np.square(1-(np.dot(Xi_fp_d, Xj_fp_d.T) / (Xii_d + Xjj_d - np.dot(Xi_fp_d, Xj_fp_d.T)))) - gamma3*np.square(1-(np.dot(Xi_fp_a, Xj_fp_a.T) / (Xii_a + Xjj_a - np.dot(Xi_fp_a, Xj_fp_a.T)))))
-    #print('croqueta K just before return:', K)
+    #print('K just before return:', K)
     return K
 
-### Kernel function ###
+### KRR Kernel function ###
 def gaussian_kernel(Xi, Xj, gamma):
     '''
     Function to compute a gaussian kernel.
@@ -528,7 +521,7 @@ def gaussian_kernel(Xi, Xj, gamma):
 
     return K
 
-### Kernel function ###
+### KRR Kernel function ###
 def tanimoto_kernel(Xi, Xj, gamma):
     '''
     Function to compute a Tanimoto kernel.
@@ -557,7 +550,7 @@ def tanimoto_kernel(Xi, Xj, gamma):
 
     return K
 
-### Kernel function ###
+### KRR Kernel function ###
 def build_hybrid_kernel(gamma1,gamma2,gamma3):
     '''
     Parameters
@@ -619,106 +612,93 @@ def build_hybrid_kernel(gamma1,gamma2,gamma3):
 
     return hybrid_kernel
 
-### Preprocess function to scale data ###
-def preprocess_fn(X):
-    '''
-    Function to preprocess raw data for the KRR.
 
-    Parameters
-    ----------
-    X: np.array.
-        raw data array.
 
-    Returns
-    -------
-    X: np.array.
-        processed data array.
-    '''
-    X_el=[[] for j in range(Ndata)]
-    X_fp_d=[]
-    X_fp_a=[]
-    for i in range(Ndata):
-        for j in range(elec_descrip):
-            X_el[i].append(X[i][j])
-        X_fp_d.append(X[i][elec_descrip])
-        X_fp_a.append(X[i][elec_descrip+1])
-    xscaler = StandardScaler()
-    X_el = xscaler.fit_transform(X_el)
-    X = np.c_[ X_el,X_fp_d,X_fp_a]
+#### Function to get FP from smiles (not used) ###
+#def preprocess_smiles(X):
+    #'''
+    #Function to preprocess SMILES.
 
-    return X
+    #Parameters
+    #----------
+    #df: Pandas DataFrame.
+        #input data DataFrame.
 
-### Function to get FP from smiles (not used) ###
-def preprocess_smiles(X):
-    '''
-    Function to preprocess SMILES.
+    #Returns
+    #-------
+    #df: Pandas DataFrame.
+        #preprocessed data DataFrame.
+    #'''
+    #X["Smiles"]  = X["Smiles"].map(polish_smiles)
+    #X["DonorFP"] = X["Smiles"].map(get_fp_bitvect)
+    #return X
 
-    Parameters
-    ----------
-    df: Pandas DataFrame.
-        input data DataFrame.
+#### Function to get FP from smiles (not used) ###
+#def polish_smiles(smiles, kekule=False):
+    #'''
+    #Function to polish a SMILES string through the RDKit.
 
-    Returns
-    -------
-    df: Pandas DataFrame.
-        preprocessed data DataFrame.
-    '''
-    X["Smiles"]  = X["Smiles"].map(polish_smiles)
-    X["DonorFP"] = X["Smiles"].map(get_fp_bitvect)
-    return X
+    #Parameters
+    #----------
+    #smiles: str.
+        #SMILES string.
+    #kekule: bool (default: False).
+        #whether to return Kekule SMILES.
 
-### Function to get FP from smiles (not used) ###
-def polish_smiles(smiles, kekule=False):
-    '''
-    Function to polish a SMILES string through the RDKit.
+    #Returns
+    #-------
+    #polished: str.
+        #SMILES string.
+    #'''
+    #mol = Chem.MolFromSmiles(smiles)
+    #polished = Chem.MolToSmiles(mol, kekuleSmiles=kekule)
+    #return polished
 
-    Parameters
-    ----------
-    smiles: str.
-        SMILES string.
-    kekule: bool (default: False).
-        whether to return Kekule SMILES.
+#### Function to get FP from smiles (not used) ###
+#def get_fp_bitvect(smiles):
+    #'''
+    #Function to convert a SMILES string to a Morgan fingerprint through the
+    #RDKit.
 
-    Returns
-    -------
-    polished: str.
-        SMILES string.
-    '''
-    mol = Chem.MolFromSmiles(smiles)
-    polished = Chem.MolToSmiles(mol, kekuleSmiles=kekule)
-    return polished
+    #Parameters
+    #----------
+    #smiles: str.
+        #SMILES string.
 
-### Function to get FP from smiles (not used) ###
-def get_fp_bitvect(smiles):
-    '''
-    Function to convert a SMILES string to a Morgan fingerprint through the
-    RDKit.
+    #Returns
+    #-------
+    #fp_arr: np.array.
+        #Bit vector corresponding to the Morgan fingerpring.
+    #'''
+    #mol = Chem.MolFromSmiles(smiles)
+    #fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(mol, 2)
+    #fp_arr = np.zeros((1,))
+    #DataStructs.ConvertToNumpyArray(fp, fp_arr)
+    #return fp_arr
 
-    Parameters
-    ----------
-    smiles: str.
-        SMILES string.
+### Function just used to test custom metrics (not used) ###
+#def mimic_minkowski(X1,X2):
+    #distance=0.0
+    #print('X1:',flush=True)
+    #print(X1,flush=True)
+    #print('X2:',flush=True)
+    #print(X2,flush=True)
+    #for i in range(len(X1)):
+        #distance=distance+(X1[i]-X2[i])**2
+    #distance=distance**(1.0/2.0)
+    #return distance
 
-    Returns
-    -------
-    fp_arr: np.array.
-        Bit vector corresponding to the Morgan fingerpring.
-    '''
-    mol = Chem.MolFromSmiles(smiles)
-    fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(mol, 2)
-    fp_arr = np.zeros((1,))
-    DataStructs.ConvertToNumpyArray(fp, fp_arr)
-    return fp_arr
 ##### END OTHER FUNCTIONS ######
 ################################################################################
-# Open log file to write intermediate information
-if print_log==True:
-    f_out = open('%s' %log_name,'w')
-else:
-    f_out=None
-# Execute main program
+################################################################################
+################################################################################
+### Run main program ###
 start = time()
+# Read input values
+(ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out) = read_initial_values(input_file_name)
+# Execute main function
 main(alpha,gamma1,gamma2,gamma3,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3)
+# Print running time and close log file
 time_taken = time()-start
 print ('Process took %0.2f seconds' %time_taken,flush=True)
 if print_log==True: f_out.write('Process took %0.2f seconds\n' %(time_taken))
