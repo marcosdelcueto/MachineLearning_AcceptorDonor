@@ -34,3 +34,6 @@ X:
  [-0.19388006 -0.03277196 -4.4079593  ...  0.          0.
    0.        ]] 
 Entries for each a/d pair: 4101 
+New k-NN call: 
+gamma1: 1.000000, gamma2: 1.000000 gamma3: 1.000000, r k-NN: 0.586790, rmse k-NN: 2.444331 
+Process took 119.11 seconds

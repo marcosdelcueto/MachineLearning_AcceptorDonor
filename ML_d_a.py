@@ -300,7 +300,7 @@ def kNN(hyperparams,X,y,condition,gammas):
     y_predicted_knn_list_list = [item for caca in y_predicted_knn_list for item in caca ]
     # Calculate rmse and r
     if weight_RMSE == True:
-        weights = y_real_knn_list_list**2 / np.linalg.norm(y_real_knn_list_list**2)
+        weights = np.square(y_real_knn_list_list) / np.linalg.norm(np.square(y_real_knn_list_list))
     else:
         weights = np.ones_like(y_real_knn_list_list)
     r_knn, _ = pearsonr(y_real_knn_list_list, y_predicted_knn_list_list)
@@ -361,7 +361,7 @@ def KRR(hyperparams,X,y,condition,gammas):
     y_predicted_krr_list_list = [item for caca in y_predicted_krr_list for item in caca ]
     # Calculate rmse and r
     if weight_RMSE == True:
-        weights = y_real_krr_list_list**2 / np.linalg.norm(y_real_krr_list_list**2)
+        weights = np.square(y_real_krr_list_list) / np.linalg.norm(np.square(y_real_krr_list_list))
     else:
         weights = np.ones_like(y_real_krr_list_list)
     r_KRR, _ = pearsonr(y_real_krr_list_list, y_predicted_krr_list_list)
@@ -418,7 +418,7 @@ def func_SVR(hyperparams,X,y,condition,gammas):
     y_predicted_svr_list_list = [item for caca in y_predicted_svr_list for item in caca ]
     # Calculate rmse and r
     if weight_RMSE == True:
-        weights = y_real_svr_list_list**2 / np.linalg.norm(y_real_svr_list_list**2)
+        weights = np.square(y_real_svr_list_list) / np.linalg.norm(np.square(y_real_svr_list_list))
     else:
         weights = np.ones_like(y_real_svr_list_list)
     r_SVR, _ = pearsonr(y_real_svr_list_list, y_predicted_svr_list_list)
