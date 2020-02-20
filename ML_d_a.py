@@ -25,6 +25,7 @@ from sklearn.neighbors import KNeighborsRegressor, DistanceMetric
 #import rdkit
 #from rdkit import Chem, DataStructs
 #from rdkit.Chem import rdMolDescriptors
+# I am just testing few local changes
 #################################################################################
 ######## START CUSTOMIZABLE PARAMETERS ########
 ML='SVR'                    	# 'kNN' or 'KRR' or 'SVR'
