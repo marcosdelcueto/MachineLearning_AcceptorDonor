@@ -2,9 +2,6 @@
 # Marcos del Cueto
 # Department of Chemistry and MIF, University of Liverpool
 #################################################################################
-# I am just testing here
-# This is added in new_test_branch
-# This is done in local master
 import sys
 import ast
 import math
@@ -172,7 +169,7 @@ def read_initial_values(inp):
     var_value = []
     # read info before comments. Ignore commented lines and blank lines
     for line in f1:
-        if not line.startswith("#") and not line.startswith("\n"): 
+        if not line.startswith("#") and line.strip(): 
             input_info.append(line.split('#',1)[0].strip())
     # read names and values of variables
     for i in range(len(input_info)):
