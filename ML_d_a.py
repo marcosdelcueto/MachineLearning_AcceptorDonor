@@ -29,7 +29,8 @@ from sklearn.neighbors import KNeighborsRegressor, DistanceMetric
 #################################################################################
 ####### START CUSTOMIZABLE PARAMETERS #######
 input_file_name = 'input_ML_d_a.txt'  # name of input file
-######## END CUSTOMIZABLE PARAMETERS ########
+# The rest of input options are inside the file 'input_file_name'
+#######  END CUSTOMIZABLE PARAMETERS  #######
 #################################################################################
 
 #################################################################################
@@ -173,7 +174,6 @@ def read_initial_values(inp):
             input_info.append(line.split('#',1)[0].strip())
     # read names and values of variables
     for i in range(len(input_info)):
-        print(input_info[i].split('=')[0].strip(), input_info[i].split('=')[1].strip())
         var_name.append(input_info[i].split('=')[0].strip())
         var_value.append(input_info[i].split('=')[1].strip())
     # close input file
@@ -205,9 +205,55 @@ def read_initial_values(inp):
         f_out = open('%s' %log_name,'w')
     else:
         f_out=None
-    for i in range(len(input_info)):
-        if print_log==True: f_out.write('%s, %s \n' % (str(input_info[i].split('=')[0].strip()), str(input_info[i].split('=')[1].strip())))
-    #print(ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out)
+    print('### START PRINT INPUT OPTIONS ###')
+    print('ML = ', ML)
+    print('Neighbors = ', Neighbors)
+    print('alpha = ', alpha)
+    print('gamma1 = ', gamma1)
+    print('gamma2 = ', gamma2)
+    print('gamma3 = ', gamma3)
+    print('optimize_hyperparams = ', optimize_hyperparams)
+    print('alpha_lim = ', alpha_lim)
+    print('gamma_lim1 = ', gamma_lim1)
+    print('gamma_lim2 = ', gamma_lim2)
+    print('gamma_lim3 = ', gamma_lim3)
+    print('input_file = ', input_file)
+    print('elec_descrip = ', elec_descrip)
+    print('xcols = ', xcols)
+    print('ycols = ', ycols)
+    print('Ndata = ', Ndata)
+    print('print_log = ', print_log)
+    print('log_name = ', log_name)
+    print('NCPU = ', NCPU)
+    #print('f_out = ', f_out)
+    print('FP_length = ', FP_length)
+    print('weight_RMSE = ', weight_RMSE)
+    print('### END PRINT INPUT OPTIONS ###')
+    if print_log==True: f_out.write('### START PRINT INPUT OPTIONS ###')
+    if print_log==True: f_out.write('ML %s\n' % str(ML))
+    if print_log==True: f_out.write('Neighbors %s\n' % str(Neighbors))
+    if print_log==True: f_out.write('alpha %s\n' % str(alpha))
+    if print_log==True: f_out.write('gamma1 %s\n' % str(gamma1))
+    if print_log==True: f_out.write('gamma2 %s\n' % str(gamma2))
+    if print_log==True: f_out.write('gamma3 %s\n' % str(gamma3))
+    if print_log==True: f_out.write('optimize_hyperparams %s\n' % str(optimize_hyperparams))
+    if print_log==True: f_out.write('alpha_lim %s\n' % str(alpha_lim))
+    if print_log==True: f_out.write('gamma_lim1 %s\n' % str(gamma_lim1))
+    if print_log==True: f_out.write('gamma_lim2 %s\n' % str(gamma_lim2))
+    if print_log==True: f_out.write('gamma_lim3 %s\n' % str(gamma_lim3))
+    if print_log==True: f_out.write('input_file %s\n' % str(input_file))
+    if print_log==True: f_out.write('elec_descrip %s\n' % str(elec_descrip))
+    if print_log==True: f_out.write('xcols %s\n' % str(xcols))
+    if print_log==True: f_out.write('ycols %s\n' % str(ycols))
+    if print_log==True: f_out.write('Ndata %s\n' % str(Ndata))
+    if print_log==True: f_out.write('print_log %s\n' % str(print_log))
+    if print_log==True: f_out.write('log_name %s\n' % str(log_name))
+    if print_log==True: f_out.write('NCPU %s\n' % str(NCPU))
+    #if print_log==True: f_out.write('f_out %s\n' % str(f_out))
+    if print_log==True: f_out.write('FP_length %s\n' % str(FP_length))
+    if print_log==True: f_out.write('weight_RMSE %s\n' % str(weight_RMSE))
+    if print_log==True: f_out.write('### END PRINT INPUT OPTIONS ###')
+
     return (ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE)
 
 ### Preprocess function to scale data ###
@@ -260,13 +306,7 @@ def custom_distance(X1,X2,gamma1,gamma2,gamma3):
 
 ### Function to calculate rmse and r with k-NN ###
 def kNN(hyperparams,X,y,condition,gammas):
-    #print('calling kNN function',flush=True)
-    #if print_log==True: f_out.write('calling kNN function \n' )
-    #if print_log==True: f_out.flush()
-    y_predicted_knn=[]
-    y_real_knn=[]
-    loo=LeaveOneOut()
-    #print('debug: I am using condition:', condition)
+    # Assign hyperparameters
     if condition==1:
         gamma1 = gammas[0]
         gamma2, gamma3 = hyperparams
@@ -276,11 +316,14 @@ def kNN(hyperparams,X,y,condition,gammas):
         gamma3 = gammas[1]
     elif condition==3:
         gamma1, gamma2, gamma3 = hyperparams
-    # For each entry of LOO
+    # LOO
+    y_predicted_knn=[]
+    y_real_knn=[]
+    loo=LeaveOneOut()
     counter=1
+    # For each entry of LOO
     for train_index, test_index in loo.split(X, y):
         print('Step',counter," / ", Ndata,flush=True)
-        print('train, test:',train_index,test_index,flush=True)
         counter=counter+1
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
@@ -305,6 +348,7 @@ def kNN(hyperparams,X,y,condition,gammas):
         weights = np.ones_like(y_real_knn_list_list)
     r_knn, _ = pearsonr(y_real_knn_list_list, y_predicted_knn_list_list)
     rms_knn  = sqrt(mean_squared_error(y_real_knn_list_list, y_predicted_knn_list_list,sample_weight=weights))
+    # Print results
     print('New k-NN call:')
     print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r k-NN:', r_knn.tolist(), 'rmse k-NN:',rms_knn,flush=True)
     if print_log==True: f_out.write('New k-NN call: \n')
@@ -314,10 +358,7 @@ def kNN(hyperparams,X,y,condition,gammas):
 
 ### Function to calculate rmse and r with k-NN (need to be adapted to new dataset) ###
 def KRR(hyperparams,X,y,condition,gammas):
-    #print('calling KRR function',flush=True)
-    #if print_log==True: f_out.write('calling KRR function \n' )
-    #if print_log==True: f_out.flush()
-    #### Build kernel function
+    # Assign hyperparameters
     if condition==1:
         gamma1 = gammas[0]
         alpha, gamma2, gamma3 = hyperparams
@@ -327,25 +368,23 @@ def KRR(hyperparams,X,y,condition,gammas):
         gamma3 = gammas[1]
     elif condition==3:
         alpha, gamma1, gamma2, gamma3 = hyperparams
+    # Build kernel function
     kernel = build_hybrid_kernel(gamma1=gamma1,gamma2=gamma2,gamma3=gamma3)
-    # LOO loop
+    # LOO
     y_predicted_krr=[]
     y_real_krr=[]
     loo = LeaveOneOut()
     y_true = []
     y_pred = []
     tr_errs = []
-    # For each entry of LOO
     counter=1
+    # For each entry of LOO
     for train_index, test_index in loo.split(X, y):
-        #if counter%5==0: print('Step',counter," / ", Ndata,flush=True)
         print('Step',counter," / ", Ndata,flush=True)
-        #print('train, test:',train_index,test_index,flush=True)
         counter=counter+1
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
         krr = KernelRidge(alpha=alpha, kernel=kernel)
-        # Train model
         krr.fit(X_train, y_train)
         y_pred_krr = krr.predict(X_test)
         y_predicted_krr.append(y_pred_krr.tolist())
@@ -366,6 +405,7 @@ def KRR(hyperparams,X,y,condition,gammas):
         weights = np.ones_like(y_real_krr_list_list)
     r_KRR, _ = pearsonr(y_real_krr_list_list, y_predicted_krr_list_list)
     rms_KRR  = sqrt(mean_squared_error(y_real_krr_list_list, y_predicted_krr_list_list,sample_weight=weights))
+    # Print results
     print('New KRR call:')
     print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r KRR:', r_KRR, 'rmse KRR:',rms_KRR,flush=True)
     print('alpha:',krr.get_params(),flush=True)
@@ -377,7 +417,7 @@ def KRR(hyperparams,X,y,condition,gammas):
 
 ### Function to calculate rmse and r with SVR ###
 def func_SVR(hyperparams,X,y,condition,gammas):
-    rms_SVR=1.0
+    # Assign hyperparameters
     if condition==1:
         gamma1 = gammas[0]
         gamma2, gamma3 = hyperparams
@@ -387,21 +427,21 @@ def func_SVR(hyperparams,X,y,condition,gammas):
         gamma3 = gammas[1]
     elif condition==3:
         gamma1, gamma2, gamma3 = hyperparams
-    # LOO loop
+    # Build kernel function
+    svr = SVR(kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3))
+    # LOO
     y_predicted_svr=[]
     y_real_svr=[]
     loo = LeaveOneOut()
     y_true = []
     y_pred = []
     tr_errs = []
+    counter=1
     # For each entry of LOO
-    counter=0
     for train_index, test_index in loo.split(X, y):
         print('Step',counter," / ", Ndata,flush=True)
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
-        svr = SVR(kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3))
-        # Train model
         svr.fit(X_train, y_train.ravel())
         y_pred_svr = svr.predict(X_test)
         y_predicted_svr.append(y_pred_svr.tolist())
@@ -423,6 +463,7 @@ def func_SVR(hyperparams,X,y,condition,gammas):
         weights = np.ones_like(y_real_svr_list_list)
     r_SVR, _ = pearsonr(y_real_svr_list_list, y_predicted_svr_list_list)
     rms_SVR  = sqrt(mean_squared_error(y_real_svr_list_list, y_predicted_svr_list_list,sample_weight=weights))
+    # Print results
     print('New SVR call:')
     print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r SVR:', r_SVR, 'rmse SVR:',rms_SVR,flush=True)
     print('SVR parameters:',svr.get_params(),flush=True)
@@ -434,19 +475,21 @@ def func_SVR(hyperparams,X,y,condition,gammas):
 
 ### SVR kernel function
 def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
-    ndesp1 = elec_descrip + FP_length
+    # Initialize kernel values
     K_el   = 1.0
     K_fp_d = 1.0
     K_fp_a = 1.0
-    ### K_el ###
     size_matrix1=_x1.shape[0]
     size_matrix2=_x2.shape[0]
+    ### K_el ###
     if gamma1 != 0.0:
+        # define Xi_el
         Xi_el = [[] for j in range(size_matrix1)]
         for i in range(size_matrix1):
             for j in range(elec_descrip):
                 Xi_el[i].append(_x1[i][j])
         Xi_el = np.array(Xi_el)
+        # define Xj_el
         Xj_el = [[] for j in range(size_matrix2)]
         for i in range(size_matrix2):
             for j in range(elec_descrip):

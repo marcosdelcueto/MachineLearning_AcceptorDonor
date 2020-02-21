@@ -1,25 +1,26 @@
-ML, 'SVR' 
-Neighbors, 3 
-alpha, 1.0 
-gamma1, 1.0 
-gamma2, 1.0 
-gamma3, 1.0 
-optimize_hyperparams, False 
-alpha_lim, (0.0, 2.0) 
-gamma_lim1, (0.0, 2.0) 
-gamma_lim2, (0.0, 6.0) 
-gamma_lim3, (0.0, 6.0) 
-weight_RMSE, False 
-input_file, 'db_new_short.csv' 
-Ndata, 16 
-elec_descrip, 5 
-xcols, ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","SMILES-DFP","SMILES-AFP"] 
-ycols, [ "PCE" ] 
-FP_length, 2048 
-print_log, True 
-log_name, 'log_ML_d_a.log' 
-NCPU, 1 
-X: 
+### START PRINT INPUT OPTIONS ###ML kNN
+Neighbors 3
+alpha 1.0
+gamma1 1.0
+gamma2 1.0
+gamma3 1.0
+optimize_hyperparams False
+alpha_lim (0.0, 2.0)
+gamma_lim1 (0.0, 2.0)
+gamma_lim2 (0.0, 6.0)
+gamma_lim3 (0.0, 6.0)
+input_file db_new_short.csv
+elec_descrip 5
+xcols ['HOMO-D', 'LUMO-D', 'LUMO-A', 'Reor-D', 'Reor-A', 'SMILES-DFP', 'SMILES-AFP']
+ycols ['PCE']
+Ndata 16
+print_log True
+log_name log_ML_d_a.log
+NCPU 1
+f_out <_io.TextIOWrapper name='log_ML_d_a.log' mode='w' encoding='UTF-8'>
+FP_length 2048
+weight_RMSE False
+### END PRINT INPUT OPTIONS ###X: 
 [[-0.92888785 -1.54210852  0.2441179  ...  0.          0.
    0.        ]
  [-0.92888785 -1.54210852  0.82291357 ...  0.          0.
@@ -34,7 +35,6 @@ X:
  [ 0.96916391  0.99013199  0.82291357 ...  0.          0.
    0.        ]] 
 Entries for each a/d pair: 4101 
-New SVR call: 
-gamma1: 1.000000, gamma2: 1.000000 gamma3: 1.000000, r k-NN: -0.227555, rmse k-NN: 2.014500 
-alpha: {'C': 1.0, 'cache_size': 200, 'coef0': 0.0, 'degree': 3, 'epsilon': 0.1, 'gamma': 'scale', 'kernel': functools.partial(<function kernel_SVR at 0xa36f2854>, gamma1=1.0, gamma2=1.0, gamma3=1.0), 'max_iter': -1, 'shrinking': True, 'tol': 0.001, 'verbose': False} 
-Process took 1.62 seconds
+New k-NN call: 
+gamma1: 1.000000, gamma2: 1.000000 gamma3: 1.000000, r k-NN: 0.114976, rmse k-NN: 1.902748 
+Process took 0.10 seconds
