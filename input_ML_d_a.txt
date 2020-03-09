@@ -6,7 +6,7 @@
 ######################################
 # Machine Learning Algorithm options #
 ######################################
-ML = 'SVR'                           # 'kNN' or 'KRR' or 'SVR'
+ML = 'KRR'                           # 'kNN' or 'KRR' or 'SVR'
 ### General hyperparameters ##########
 optimize_hyperparams = True    	    # whether hyperparameters are optimized (True) or just use initial values (False). If gammaX=0.0, then that hyperparam is not optimized anyway
 gamma1 = 1.0                         # hyperparameter with weight of d_el
@@ -45,5 +45,5 @@ log_name  = 'log_ML_d_a.log'         # name of log file
 ######################################
 ########### Parallelization ##########
 ######################################
-NCPU = 1                             # select number of CPUs (-1 means all CPUs in a node) (ONLY USED IF "optimize_hyperparams = True")
+NCPU = 4                             # select number of CPUs (-1 means all CPUs in a node) (ONLY USED IF "optimize_hyperparams = True")
 ######################################

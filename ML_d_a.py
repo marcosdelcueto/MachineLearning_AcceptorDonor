@@ -61,73 +61,51 @@ def main(alpha,gamma1,gamma2,gamma3,C,epsilon,alpha_lim,gamma_lim1,gamma_lim2,ga
     if print_log==True: f_out.write('%s \n' %(str(X)))
     if print_log==True: f_out.write('Entries for each a/d pair: %i \n' %(len(X[0])))
     if print_log==True: f_out.flush()
-    # Get optimimum hyperparameters, or just use initial used
+    # Get optimimum hyperparameters
     if optimize_hyperparams==True:
-        # Call kNN or KRR functions
-        if ML=='kNN': 
-            gammas = []
-            if gamma1==0.0: # use just structural descriptors
-                condition=1
-                hyperparams=[gamma2,gamma3]
+        fixed_hyperparams = []
+        # Use just structural descriptors
+        if gamma1==0.0:
+            condition='structure'
+            fixed_hyperparams =[gamma1]
+            if ML=='kNN': 
+                hyperparams=[gamma2,gamma3]                
                 bounds = [gamma_lim2] + [gamma_lim3]
-                gammas =[gamma1]
-                mini_args = (X, y, condition,gammas)
-            elif gamma2==0.0 and gamma3==0.0: # use just electronic descriptors
-                condition=2
+            elif ML=='KRR':
+                hyperparams=[gamma2,gamma3,alpha]
+                bounds = [gamma_lim2] + [gamma_lim3] + [alpha_lim]
+            elif ML=='SVR':
+                hyperparams=[gamma2,gamma3,C,epsilon]
+                bounds = [gamma_lim2] + [gamma_lim3] + [C_lim] + [epsilon_lim]
+        # Use just electronic descriptors
+        elif gamma2==0.0 and gamma3==0.0:
+            condition='electronic'
+            fixed_hyperparams =[gamma2,gamma3]
+            if ML=='kNN': 
                 hyperparams=[gamma1]
-                bounds = [ gamma_lim1 ]
-                gammas =[gamma2,gamma3]
-                mini_args = (X, y, condition,gammas)
-            else: # use both electronic and structural descriptors
-                condition=3
+                bounds = [gamma_lim1]
+            if ML=='KRR': 
+                hyperparams=[gamma1,alpha]
+                bounds = [gamma_lim1] + [alpha_lim]
+            if ML=='SVR': 
+                hyperparams=[gamma1,C,epsilon]
+                bounds = [gamma_lim1] + [C_lim] + [epsilon_lim]
+        # Use both electronic and structural descriptors
+        else:
+            condition='structure_and_electronic'
+            fixed_hyperparams =[]
+            if ML=='kNN':
                 hyperparams=[gamma1,gamma2,gamma3]
-                bounds = [ gamma_lim1 ] + [gamma_lim2] + [gamma_lim3]
-                gammas =[]
-                mini_args = (X, y, condition,gammas)
-            solver = differential_evolution(func_kNN,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
-        elif ML=='KRR':
-            gammas = []
-            if gamma1==0.0: # use just structural descriptors
-                condition=1
-                hyperparams=[alpha,gamma2,gamma3]
-                bounds = [alpha_lim] + [gamma_lim2] + [gamma_lim3]
-                gammas =[gamma1]
-                mini_args = (X, y, condition,gammas)
-            elif gamma2==0.0 and gamma3==0.0: # use just electronic descriptors
-                condition=2
-                hyperparams=[alpha,gamma1]
-                bounds = [alpha_lim] + [ gamma_lim1 ]
-                gammas =[gamma2,gamma3]
-                mini_args = (X, y, condition,gammas)
-            else: # use both electronic and structural descriptors
-                condition=3
-                hyperparams=[alpha,gamma1,gamma2,gamma3]
-                bounds = [alpha_lim] + [ gamma_lim1 ] + [gamma_lim2] + [gamma_lim3]
-                gammas = []
-                mini_args = (X, y, condition,gammas)
-            solver = differential_evolution(func_KRR,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
-        if ML=='SVR': 
-            gammas = []
-            if gamma1==0.0: # use just structural descriptors
-                condition=1
-                hyperparams=[C,epsilon,gamma2,gamma3]
-                bounds = [C_lim] + [epsilon_lim] + [gamma_lim2] + [gamma_lim3]
-                gammas =[gamma1]
-                mini_args = (X, y, condition,gammas)
-            elif gamma2==0.0 and gamma3==0.0: # use just electronic descriptors
-                condition=2
-                hyperparams=[C,epsilon,gamma1]
-                bounds = [C_lim] + [epsilon_lim] + [ gamma_lim1 ]
-                gammas =[gamma2,gamma3]
-                mini_args = (X, y, condition,gammas)
-            else: # use both electronic and structural descriptors
-                condition=3
-                hyperparams=[C,epsilon,gamma1,gamma2,gamma3]
-                bounds = [C_lim] + [epsilon_lim] + [ gamma_lim1 ] + [gamma_lim2] + [gamma_lim3]
-                gammas =[]
-                mini_args = (X, y, condition,gammas)
-            solver = differential_evolution(func_SVR,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
-        # Get best hyperparams
+                bounds = [gamma_lim1] + [gamma_lim2] + [gamma_lim3]
+            if ML=='KRR':
+                hyperparams=[gamma1,gamma2,gamma3,alpha]
+                bounds = [gamma_lim1] + [gamma_lim2] + [gamma_lim3] + [alpha_lim]
+            if ML=='SVR':
+                hyperparams=[gamma1,gamma2,gamma3,C,epsilon]
+                bounds = [ gamma_lim1 ] + [gamma_lim2] + [gamma_lim3] + [C_lim] + [epsilon_lim]
+        mini_args = (X, y, condition,fixed_hyperparams)
+        solver = differential_evolution(func_ML,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
+        # print best hyperparams
         best_hyperparams = solver.x
         best_rmse = solver.fun
         print('Best hyperparameters:', best_hyperparams,flush=True)
@@ -136,23 +114,14 @@ def main(alpha,gamma1,gamma2,gamma3,C,epsilon,alpha_lim,gamma_lim1,gamma_lim2,ga
         if print_log==True: f_out.write('Best rmse: %s \n' %(str(best_rmse)))
         if print_log==True: f_out.flush()
         hyperparams=best_hyperparams.tolist()
+    # Use initial hyperparameters
     elif optimize_hyperparams==False:
-        pass
-        if ML=='kNN': 
-            condition = 3 
-            gammas = []
-            hyperparams=[gamma1,gamma2,gamma3]
-            func_kNN(hyperparams,X,y,condition,gammas)
-        elif ML=='KRR': 
-            condition = 3 
-            gammas = []
-            hyperparams=[alpha,gamma1,gamma2,gamma3]
-            func_KRR(hyperparams,X,y,condition,gammas)
-        elif ML=='SVR': 
-            condition = 3 
-            gammas = []
-            hyperparams=[C,epsilon,gamma1,gamma2,gamma3]
-            func_SVR(hyperparams,X,y,condition,gammas)
+        condition='structure_and_electronic'
+        fixed_hyperparams = []
+        if ML=='kNN': hyperparams=[gamma1,gamma2,gamma3]
+        if ML=='KRR': hyperparams=[gamma1,gamma2,gamma3,alpha]
+        if ML=='SVR': hyperparams=[gamma1,gamma2,gamma3,C,epsilon]
+        func_ML(hyperparams,X,y,condition,fixed_hyperparams)
 ###### END MAIN ######
 #################################################################################
 
@@ -347,25 +316,50 @@ def custom_distance(X1,X2,gamma1,gamma2,gamma3):
     distance=gamma1*d_el+gamma2*d_fp_d+gamma3*d_fp_a
     return distance
 
-### Function to calculate rmse and r with k-NN ###
-def func_kNN(hyperparams,X,y,condition,gammas):
+
+### ML Function to calculate rmse and r ###
+def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
     # Assign hyperparameters
-    if condition==1:
-        gamma1 = gammas[0]
-        gamma2, gamma3 = hyperparams
-    elif condition==2:
-        gamma1 = hyperparams
-        gamma2 = gammas[0]
-        gamma3 = gammas[1]
-    elif condition==3:
-        gamma1, gamma2, gamma3 = hyperparams
-    # Assign kNN parameters
-    knn = KNeighborsRegressor(n_neighbors=Neighbors, weights='distance', metric=custom_distance,metric_params={"gamma1":gamma1,"gamma2":gamma2,"gamma3":gamma3})
+    if condition=='structure':
+        gamma1 = fixed_hyperparams[0]
+        gamma2 = hyperparams[0]
+        gamma3 = hyperparams[1]
+        if ML=='KRR': 
+            alpha = hyperparams[2]
+        if ML=='SVR':
+            C = hyperparams[2]
+            epsilon = hyperparams[3]
+    elif condition=='electronic':
+        gamma2 = fixed_hyperparams[0]
+        gamma3 = fixed_hyperparams[1]
+        gamma1 = hyperparams[0]
+        if ML=='KRR':
+            alpha = hyperparams[1]
+        if ML=='SVR':
+            C = hyperparams[1]
+            epsilon = hyperparams[2]
+    elif condition=='structure_and_electronic':
+        gamma1 = hyperparams[0]
+        gamma2 = hyperparams[1]
+        gamma3 = hyperparams[2]
+        if ML=='KRR':
+            alpha = hyperparams[3]
+        if ML=='SVR':
+            C = hyperparams[3]
+            epsilon = hyperparams[4]
+    # Build kernel function and assign ML parameters
+    if ML=='kNN':
+        ML_algorithm = KNeighborsRegressor(n_neighbors=Neighbors, weights='distance', metric=custom_distance,metric_params={"gamma1":gamma1,"gamma2":gamma2,"gamma3":gamma3})
+    elif ML=='KRR':
+        kernel = build_hybrid_kernel(gamma1=gamma1,gamma2=gamma2,gamma3=gamma3)
+        ML_algorithm = KernelRidge(alpha=alpha, kernel=kernel)
+    elif ML=='SVR':
+        ML_algorithm = SVR(kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3), C=C, epsilon=epsilon)
     # Initialize values
-    y_predicted_knn=[]
-    y_real_knn=[]
-    loo=LeaveOneOut()
-    counter=1
+    y_predicted = []
+    y_real = []
+    loo = LeaveOneOut()
+    counter = 1
     # For each entry of LOO
     for train_index, test_index in loo.split(X, y):
         print('Step',counter," / ", Ndata,flush=True)
@@ -373,162 +367,36 @@ def func_kNN(hyperparams,X,y,condition,gammas):
         counter=counter+1
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
-        # train kNN
-        knn.fit(X_train, y_train)
-        # predict with  KNN
-        y_pred_knn = knn.predict(X_test)
+        # predict y values
+        y_pred = ML_algorithm.fit(X_train, y_train.ravel()).predict(X_test)
         # add predicted values in this LOO to list with total
-        y_predicted_knn.append(y_pred_knn.tolist())
-        y_real_knn.append(y_test.tolist())
-    # Put results together in a list
-    y_real_knn_list=[]
-    y_predicted_knn_list=[]
-    y_real_knn_list = [item for dummy in y_real_knn for item in dummy ]
-    y_predicted_knn_list = [item for dummy in y_predicted_knn for item in dummy ]
-    y_real_knn_list_list=[]
-    y_predicted_knn_list_list=[]
-    y_real_knn_list_list = [item for dummy in y_real_knn_list for item in dummy ]
-    y_predicted_knn_list_list = [item for dummy in y_predicted_knn_list for item in dummy ]
+        y_predicted.append(y_pred.tolist())
+        y_real.append(y_test.tolist())
+    # Put results in a 1D list
+    y_real_list=[]
+    y_predicted_list=[]
+    y_real_list = [item for dummy in y_real for item in dummy ]
+    y_predicted_list = [item for dummy in y_predicted for item in dummy ]
+    y_real_list_list=[]
+    y_predicted_list_list=[]
+    y_real_list_list = [item for dummy in y_real_list for item in dummy ]
+    y_predicted_list_list = y_predicted_list
     # Calculate rmse and r
     if weight_RMSE == True:
-        weights = np.square(y_real_knn_list_list) / np.linalg.norm(np.square(y_real_knn_list_list))
+        weights = np.square(y_real_list_list) / np.linalg.norm(np.square(y_real_list_list))
     else:
-        weights = np.ones_like(y_real_knn_list_list)
-    r, _ = pearsonr(y_real_knn_list_list, y_predicted_knn_list_list)
-    rms  = sqrt(mean_squared_error(y_real_knn_list_list, y_predicted_knn_list_list,sample_weight=weights))
+        weights = np.ones_like(y_real_list_list)
+    r, _ = pearsonr(y_real_list_list, y_predicted_list_list)
+    rms  = sqrt(mean_squared_error(y_real_list_list, y_predicted_list_list,sample_weight=weights))
     # Print results
-    print('New k-NN call:')
+    print('New', ML, 'call:')
     print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r.tolist(), 'rmse:',rms,flush=True)
-    if print_log==True: f_out.write('New k-NN call: \n')
-    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r.tolist(), rms))
-    if print_log==True: f_out.flush()
-    return rms
-
-### Function to calculate rmse and r with k-NN (need to be adapted to new dataset) ###
-def func_KRR(hyperparams,X,y,condition,gammas):
-    # Assign hyperparameters
-    if condition==1:
-        gamma1 = gammas[0]
-        alpha, gamma2, gamma3 = hyperparams
-    elif condition==2:
-        alpha, gamma1 = hyperparams
-        gamma2 = gammas[0]
-        gamma3 = gammas[1]
-    elif condition==3:
-        alpha, gamma1, gamma2, gamma3 = hyperparams
-    # Build kernel function and assign KRR parameters
-    kernel = build_hybrid_kernel(gamma1=gamma1,gamma2=gamma2,gamma3=gamma3)
-    krr = KernelRidge(alpha=alpha, kernel=kernel)
-    # Initialize values
-    y_predicted_krr = []
-    y_real_krr = []
-    loo = LeaveOneOut()
-    y_true = []
-    y_pred = []
-    tr_errs = []
-    counter=1
-    # For each entry of LOO
-    for train_index, test_index in loo.split(X, y):
-        print('Step',counter," / ", Ndata,flush=True)
-        # assign train and etst indeces
-        X_train,X_test=X[train_index],X[test_index]
-        y_train,y_test=y[train_index],y[test_index]
-        # train KRR
-        krr.fit(X_train, y_train)
-        # predict with KRR
-        y_pred_krr = krr.predict(X_test)
-        # add predicted values in this LOO to list with total
-        y_predicted_krr.append(y_pred_krr.tolist())
-        y_real_krr.append(y_test.tolist())
-        counter=counter+1
-    # Put results together in a list
-    y_real_krr_list=[]
-    y_predicted_krr_list=[]
-    y_real_krr_list = [item for dummy in y_real_krr for item in dummy ]
-    y_predicted_krr_list = [item for dummy in y_predicted_krr for item in dummy ]
-    y_real_krr_list_list=[]
-    y_predicted_krr_list_list=[]
-    y_real_krr_list_list = [item for dummy in y_real_krr_list for item in dummy ]
-    y_predicted_krr_list_list = [item for dummy in y_predicted_krr_list for item in dummy ]
-    # Calculate rmse and r
-    if weight_RMSE == True:
-        weights = np.square(y_real_krr_list_list) / np.linalg.norm(np.square(y_real_krr_list_list))
-    else:
-        weights = np.ones_like(y_real_krr_list_list)
-    r, _ = pearsonr(y_real_krr_list_list, y_predicted_krr_list_list)
-    rms  = sqrt(mean_squared_error(y_real_krr_list_list, y_predicted_krr_list_list,sample_weight=weights))
-    # Print results
-    print('New KRR call:')
-    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r, 'rmse:',rms,flush=True)
-    print('alpha:',krr.get_params(),flush=True)
-    if print_log==True: f_out.write('New KRR call: \n')
-    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r.tolist(), rms))
-    if print_log==True: f_out.write('alpha: %s \n' %(str(krr.get_params())))
-    if print_log==True: f_out.flush()
-    return rms
-
-### Function to calculate rmse and r with SVR ###
-def func_SVR(hyperparams,X,y,condition,gammas):
-    # Assign hyperparameters
-    if condition==1:
-        gamma1 = gammas[0]
-        C, epsilon, gamma2, gamma3 = hyperparams
-    elif condition==2:
-        C, epsilon, gamma1 = hyperparams
-        gamma2 = gammas[0]
-        gamma3 = gammas[1]
-    elif condition==3:
-        C, epsilon, gamma1, gamma2, gamma3 = hyperparams
-    # Build kernel and assign SVR parameters
-    svr = SVR(kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3), C=C, epsilon=epsilon)
-    # Initialize values
-    y_predicted_svr = []
-    y_real_svr = []
-    loo = LeaveOneOut()
-    y_true = []
-    y_pred = []
-    tr_errs = []
-    counter=1
-    # For each entry of LOO
-    for train_index, test_index in loo.split(X, y):
-        print('Step',counter," / ", Ndata,flush=True)
-        # assign train and etst indeces
-        X_train,X_test=X[train_index],X[test_index]
-        y_train,y_test=y[train_index],y[test_index]
-        # train SVR
-        svr.fit(X_train, y_train.ravel())
-        # predict with SVR
-        y_pred_svr = svr.predict(X_test)
-        # add predicted values in this LOO to list with total
-        y_predicted_svr.append(y_pred_svr.tolist())
-        y_real_svr.append(y_test.tolist())
-        counter=counter+1
-    # Put results together in a list
-    y_real_svr_list=[]
-    y_predicted_svr_list=[]
-    y_real_svr_list = [item for dummy in y_real_svr for item in dummy ]
-    y_predicted_svr_list = y_predicted_svr
-    y_real_svr_list_list=[]
-    y_predicted_svr_list_list=[]
-    y_real_svr_list_list = [item for dummy in y_real_svr_list for item in dummy ]
-    y_predicted_svr_list_list = [item for dummy in y_predicted_svr_list for item in dummy ]
-    # Calculate rmse and r
-    if weight_RMSE == True:
-        weights = np.square(y_real_svr_list_list) / np.linalg.norm(np.square(y_real_svr_list_list))
-    else:
-        weights = np.ones_like(y_real_svr_list_list)
-    r, _ = pearsonr(y_real_svr_list_list, y_predicted_svr_list_list)
-    rms  = sqrt(mean_squared_error(y_real_svr_list_list, y_predicted_svr_list_list,sample_weight=weights))
-    # Print results
-    print('New SVR call:')
-    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r, 'rmse:',rms,flush=True)
-    print('SVR parameters:',svr.get_params(),flush=True)
     if print_log==True: 
-        f_out.write('New SVR call: \n')
+        f_out.write('New %s call: \n' %(ML))
         f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r.tolist(), rms))
-        f_out.write('SVR parameters: %s \n' %(str(svr.get_params())))
+        if ML=='KRR' or ML=='SVR': f_out.write('hyperparameters: %s \n' %(str(ML_algorithm.get_params())))
         f_out.flush()
-    return rms
+    return rms 
 
 ### SVR kernel function
 def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
