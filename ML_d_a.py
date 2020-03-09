@@ -35,9 +35,9 @@ input_file_name = 'input_ML_d_a.txt'  # name of input file
 
 #################################################################################
 ###### START MAIN ######
-def main(alpha,gamma1,gamma2,gamma3,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3):
+def main(alpha,gamma1,gamma2,gamma3,C,epsilon,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim):
     # Read data
-    df=pd.read_csv(input_file,index_col=0)
+    df=pd.read_csv(db_file,index_col=0)
     # Preprocess data
     #df=preprocess_smiles(df) (not needed, we're reading directly FP)
     X=df[xcols].values
@@ -110,20 +110,20 @@ def main(alpha,gamma1,gamma2,gamma3,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3):
             gammas = []
             if gamma1==0.0: # use just structural descriptors
                 condition=1
-                hyperparams=[gamma2,gamma3]
-                bounds = [gamma_lim2] + [gamma_lim3]
+                hyperparams=[C,epsilon,gamma2,gamma3]
+                bounds = [C_lim] + [epsilon_lim] + [gamma_lim2] + [gamma_lim3]
                 gammas =[gamma1]
                 mini_args = (X, y, condition,gammas)
             elif gamma2==0.0 and gamma3==0.0: # use just electronic descriptors
                 condition=2
-                hyperparams=[gamma1]
-                bounds = [ gamma_lim1 ]
+                hyperparams=[C,epsilon,gamma1]
+                bounds = [C_lim] + [epsilon_lim] + [ gamma_lim1 ]
                 gammas =[gamma2,gamma3]
                 mini_args = (X, y, condition,gammas)
             else: # use both electronic and structural descriptors
                 condition=3
-                hyperparams=[gamma1,gamma2,gamma3]
-                bounds = [ gamma_lim1 ] + [gamma_lim2] + [gamma_lim3]
+                hyperparams=[C,epsilon,gamma1,gamma2,gamma3]
+                bounds = [C_lim] + [epsilon_lim] + [ gamma_lim1 ] + [gamma_lim2] + [gamma_lim3]
                 gammas =[]
                 mini_args = (X, y, condition,gammas)
             solver = differential_evolution(func_SVR,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
@@ -151,7 +151,7 @@ def main(alpha,gamma1,gamma2,gamma3,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3):
         elif ML=='SVR': 
             condition = 3 
             gammas = []
-            hyperparams=[gamma1,gamma2,gamma3]
+            hyperparams=[C,epsilon,gamma1,gamma2,gamma3]
             func_SVR(hyperparams,X,y,condition,gammas)
 ###### END MAIN ######
 #################################################################################
@@ -185,12 +185,16 @@ def read_initial_values(inp):
     gamma1 = ast.literal_eval(var_value[var_name.index('gamma1')])     # hyperparameter with weight of d_el
     gamma2 = ast.literal_eval(var_value[var_name.index('gamma2')])     # hyperparameter with weight of d_fp_d
     gamma3 = ast.literal_eval(var_value[var_name.index('gamma3')])     # hyperparameter with weight of d_fp_a
+    C = ast.literal_eval(var_value[var_name.index('C')])               # SVR hyperparameter
+    epsilon = ast.literal_eval(var_value[var_name.index('epsilon')])   # SVR hyperparameter
     optimize_hyperparams = ast.literal_eval(var_value[var_name.index('optimize_hyperparams')])# whether hyperparameters are optimized (T) or just use initial values (F). If hyperparam=0.0, then that one is not optimized
     alpha_lim  = ast.literal_eval(var_value[var_name.index('alpha_lim')])     # range in which alpha hyperparam is optimized (only used for KRR)
     gamma_lim1 = ast.literal_eval(var_value[var_name.index('gamma_lim1')])    # range in which gamma1 is optimized
     gamma_lim2 = ast.literal_eval(var_value[var_name.index('gamma_lim2')])    # range in which gamma1 is optimized
     gamma_lim3 = ast.literal_eval(var_value[var_name.index('gamma_lim3')])    # range in which gamma1 is optimized
-    input_file = ast.literal_eval(var_value[var_name.index('input_file')])    # name of input file with database
+    C_lim = ast.literal_eval(var_value[var_name.index('C_lim')])    # range in which C is optimized
+    epsilon_lim = ast.literal_eval(var_value[var_name.index('epsilon_lim')])    # range in which epsilon is optimized
+    db_file = ast.literal_eval(var_value[var_name.index('db_file')])    # name of input file with database
     elec_descrip = ast.literal_eval(var_value[var_name.index('elec_descrip')])# number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
     xcols = ast.literal_eval(var_value[var_name.index('xcols')])              # specify which descriptors are used
     ycols = ast.literal_eval(var_value[var_name.index('ycols')])              # specify which is target property
@@ -212,12 +216,16 @@ def read_initial_values(inp):
     print('gamma1 = ', gamma1)
     print('gamma2 = ', gamma2)
     print('gamma3 = ', gamma3)
+    print('C = ', C)
+    print('epsilon = ', epsilon)
     print('optimize_hyperparams = ', optimize_hyperparams)
     print('alpha_lim = ', alpha_lim)
     print('gamma_lim1 = ', gamma_lim1)
     print('gamma_lim2 = ', gamma_lim2)
     print('gamma_lim3 = ', gamma_lim3)
-    print('input_file = ', input_file)
+    print('C_lim = ', C_lim)
+    print('epsilon_lim = ', epsilon_lim)
+    print('db_file = ', db_file)
     print('elec_descrip = ', elec_descrip)
     print('xcols = ', xcols)
     print('ycols = ', ycols)
@@ -236,12 +244,15 @@ def read_initial_values(inp):
     if print_log==True: f_out.write('gamma1 %s\n' % str(gamma1))
     if print_log==True: f_out.write('gamma2 %s\n' % str(gamma2))
     if print_log==True: f_out.write('gamma3 %s\n' % str(gamma3))
+    if print_log==True: f_out.write('epsilon %s\n' % str(epsilon))
     if print_log==True: f_out.write('optimize_hyperparams %s\n' % str(optimize_hyperparams))
     if print_log==True: f_out.write('alpha_lim %s\n' % str(alpha_lim))
     if print_log==True: f_out.write('gamma_lim1 %s\n' % str(gamma_lim1))
     if print_log==True: f_out.write('gamma_lim2 %s\n' % str(gamma_lim2))
     if print_log==True: f_out.write('gamma_lim3 %s\n' % str(gamma_lim3))
-    if print_log==True: f_out.write('input_file %s\n' % str(input_file))
+    if print_log==True: f_out.write('C_lim %s\n' % str(C_lim))
+    if print_log==True: f_out.write('epsilon_lim %s\n' % str(epsilon_lim))
+    if print_log==True: f_out.write('db_file %s\n' % str(db_file))
     if print_log==True: f_out.write('elec_descrip %s\n' % str(elec_descrip))
     if print_log==True: f_out.write('xcols %s\n' % str(xcols))
     if print_log==True: f_out.write('ycols %s\n' % str(ycols))
@@ -254,7 +265,7 @@ def read_initial_values(inp):
     if print_log==True: f_out.write('weight_RMSE %s\n' % str(weight_RMSE))
     if print_log==True: f_out.write('### END PRINT INPUT OPTIONS ###')
 
-    return (ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE)
+    return (ML,Neighbors,alpha,gamma1,gamma2,gamma3,C,epsilon,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE)
 
 ### Preprocess function to scale data ###
 def preprocess_fn(X):
@@ -350,9 +361,9 @@ def kNN(hyperparams,X,y,condition,gammas):
     rms_knn  = sqrt(mean_squared_error(y_real_knn_list_list, y_predicted_knn_list_list,sample_weight=weights))
     # Print results
     print('New k-NN call:')
-    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r k-NN:', r_knn.tolist(), 'rmse k-NN:',rms_knn,flush=True)
+    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r_knn.tolist(), 'rmse:',rms_knn,flush=True)
     if print_log==True: f_out.write('New k-NN call: \n')
-    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r k-NN: %f, rmse k-NN: %f \n' %(gamma1, gamma2, gamma3, r_knn.tolist(), rms_knn))
+    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r_knn.tolist(), rms_knn))
     if print_log==True: f_out.flush()
     return rms_knn
 
@@ -407,10 +418,10 @@ def KRR(hyperparams,X,y,condition,gammas):
     rms_KRR  = sqrt(mean_squared_error(y_real_krr_list_list, y_predicted_krr_list_list,sample_weight=weights))
     # Print results
     print('New KRR call:')
-    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r KRR:', r_KRR, 'rmse KRR:',rms_KRR,flush=True)
+    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r_KRR, 'rmse:',rms_KRR,flush=True)
     print('alpha:',krr.get_params(),flush=True)
     if print_log==True: f_out.write('New KRR call: \n')
-    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r KRR: %f, rmse KRR: %f \n' %(gamma1, gamma2, gamma3, r_KRR.tolist(), rms_KRR))
+    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r_KRR.tolist(), rms_KRR))
     if print_log==True: f_out.write('alpha: %s \n' %(str(krr.get_params())))
     if print_log==True: f_out.flush()
     return rms_KRR
@@ -420,15 +431,15 @@ def func_SVR(hyperparams,X,y,condition,gammas):
     # Assign hyperparameters
     if condition==1:
         gamma1 = gammas[0]
-        gamma2, gamma3 = hyperparams
+        C, epsilon, gamma2, gamma3 = hyperparams
     elif condition==2:
-        gamma1 = hyperparams
+        C, epsilon, gamma1 = hyperparams
         gamma2 = gammas[0]
         gamma3 = gammas[1]
     elif condition==3:
-        gamma1, gamma2, gamma3 = hyperparams
+        C, epsilon, gamma1, gamma2, gamma3 = hyperparams
     # Build kernel function
-    svr = SVR(kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3))
+    svr = SVR(kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3), C=C, epsilon=epsilon)
     # LOO
     y_predicted_svr=[]
     y_real_svr=[]
@@ -465,11 +476,11 @@ def func_SVR(hyperparams,X,y,condition,gammas):
     rms_SVR  = sqrt(mean_squared_error(y_real_svr_list_list, y_predicted_svr_list_list,sample_weight=weights))
     # Print results
     print('New SVR call:')
-    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r SVR:', r_SVR, 'rmse SVR:',rms_SVR,flush=True)
+    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r_SVR, 'rmse:',rms_SVR,flush=True)
     print('SVR parameters:',svr.get_params(),flush=True)
     if print_log==True: f_out.write('New SVR call: \n')
-    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r k-NN: %f, rmse k-NN: %f \n' %(gamma1, gamma2, gamma3, r_SVR.tolist(), rms_SVR))
-    if print_log==True: f_out.write('alpha: %s \n' %(str(svr.get_params())))
+    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r_SVR.tolist(), rms_SVR))
+    if print_log==True: f_out.write('SVR parameters: %s \n' %(str(svr.get_params())))
     if print_log==True: f_out.flush()
     return rms_SVR
 
@@ -743,9 +754,9 @@ def build_hybrid_kernel(gamma1,gamma2,gamma3):
 ### Run main program ###
 start = time()
 # Read input values
-(ML,Neighbors,alpha,gamma1,gamma2,gamma3,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,input_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE) = read_initial_values(input_file_name)
+(ML,Neighbors,alpha,gamma1,gamma2,gamma3,C,epsilon,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE) = read_initial_values(input_file_name)
 # Execute main function
-main(alpha,gamma1,gamma2,gamma3,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3)
+main(alpha,gamma1,gamma2,gamma3,C,epsilon,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim)
 # Print running time and close log file
 time_taken = time()-start
 print ('Process took %0.2f seconds' %time_taken,flush=True)

@@ -1,37 +1,46 @@
-##########################################
+#######################################
 # File containing input options for ML_d_a.py
 # The name of this file can be changed, but then also need to update 'input_file_name' in ML_d_a.py
 # Lines that start with '#' are ignored. All comments after '#' are ignored. Empty lines are ignored
 # Options can be in any order
-##########################################
-### Machine Learning Algorithm options ###
-ML = 'kNN'                        # 'kNN' or 'KRR' or 'SVR'
-Neighbors = 3                     # number of nearest-neighbors (ONLY USED FOR kNN)
-alpha = 1.0                       # kernel hyperparameter (ONLY USED FOR KRR)
-gamma1 = 1.0                      # hyperparameter with weight of d_el
-gamma2 = 1.0                      # hyperparameter with weight of d_fp_d
-gamma3 = 1.0                      # hyperparameter with weight of d_fp_a
-optimize_hyperparams = False    	 # whether hyperparameters are optimized (True) or just use initial values (False). If hyperparam=0.0, then that hyperparam is not optimized anyway
-alpha_lim  = (0.0, 2.0)         	 # range in which alpha hyperparam is optimized (only used for KRR)
-gamma_lim1 = (0.0, 2.0)         	 # range in which gamma1 is optimized
-gamma_lim2 = (0.0, 6.0)         	 # range in which gamma1 is optimized
-gamma_lim3 = (0.0, 6.0)         	 # range in which gamma1 is optimized
-weight_RMSE = False					 # choose if RMSE is weighted during minimization of hyperparameters (Default: False)
-##########################################
-########### Data base options ############
-input_file = 'db_new.csv'   		 # name of input file with database
-Ndata = 566                       # number of d/a pairs
-elec_descrip = 5                	 # number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
+######################################
+# Machine Learning Algorithm options #
+######################################
+ML = 'SVR'                           # 'kNN' or 'KRR' or 'SVR'
+### General hyperparameters ##########
+optimize_hyperparams = True    	    # whether hyperparameters are optimized (True) or just use initial values (False). If gammaX=0.0, then that hyperparam is not optimized anyway
+gamma1 = 1.0                         # hyperparameter with weight of d_el
+gamma2 = 1.0                         # hyperparameter with weight of d_fp_d
+gamma3 = 1.0                         # hyperparameter with weight of d_fp_a
+gamma_lim1 = (0.0, 2.0)         	    # range in which gamma1 is optimized
+gamma_lim2 = (0.0, 6.0)         	    # range in which gamma2 is optimized
+gamma_lim3 = (0.0, 6.0)         	    # range in which gamma3 is optimized
+### k-Nearest Neighbors ('kNN') ######
+Neighbors = 3                        # number of nearest-neighbors
+### Kernel Ridge Regression ('KRR') ##
+alpha = 1.0                          # kernel hyperparameter
+alpha_lim  = (0.0, 2.0)         	    # range in which alpha hyperparam is optimized
+### Support Vector Regression #######
+C = 1.0                              # regularization hyperparameter
+epsilon = 0.1                        # epsilon-SVR
+C_lim = (0.01,100)                   # range in which C is optimized
+epsilon_lim = (0.001,100)            # range in which epsilon is optimized
+weight_RMSE = False                  # choose if RMSE is weighted during minimization of hyperparameters (Default: False)
+######################################
+########### Data base options ########
+db_file = 'db_new_short.csv'         # name of input file with database
+Ndata = 16                           # number of d/a pairs
+elec_descrip = 5                	    # number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
 xcols = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","SMILES-DFP","SMILES-AFP"]      																						# specify which descriptors are used
 #xcols = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","sum of f-D","XLOGP3-D","sum of f-A","XLOGP3-A","SMILES-DFP","SMILES-AFP"]      					# specify which descriptors are used
 #xcols = ["HOMO-D","LL+1-D","Efund-D","Ebind-D","sum of f-D","transition DM-D","Rot. Bonds-D","XLOGP3-D","E(T1)-scf-D","SMILES-DFP","SMILES-AFP"]     # specify which descriptors are used
-ycols = [ "PCE" ]               	 # specify which is target property
-FP_length = 2048						 # number of entries of each fingerprint
+ycols = [ "PCE" ]               	    # specify which is target property
+FP_length = 2048						    # number of entries of each fingerprint
 ##########################################
 ############ Verbose options #############
-print_log = True                	 # choose whether information is also written into a log file (Default: True)
-log_name  = 'log_ML_d_a.log'      # name of log file
+print_log = True                	    # choose whether information is also written into a log file (Default: True)
+log_name  = 'log_ML_d_a.log'         # name of log file
 ##########################################
 ############ Parallelization #############
-NCPU = 1                          # select number of CPUs (-1 means all CPUs in a node) (ONLY USED IF "optimize_hyperparams = True")
+NCPU = 1                             # select number of CPUs (-1 means all CPUs in a node) (ONLY USED IF "optimize_hyperparams = True")
 ##########################################
