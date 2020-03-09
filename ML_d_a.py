@@ -362,7 +362,7 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
     counter = 1
     # For each entry of LOO
     for train_index, test_index in loo.split(X, y):
-        print('Step',counter," / ", Ndata,flush=True)
+        #print('Step',counter," / ", Ndata,flush=True)
         # assign train and etst indeces
         counter=counter+1
         X_train,X_test=X[train_index],X[test_index]
