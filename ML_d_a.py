@@ -84,7 +84,7 @@ def main(alpha,gamma1,gamma2,gamma3,C,epsilon,alpha_lim,gamma_lim1,gamma_lim2,ga
                 bounds = [ gamma_lim1 ] + [gamma_lim2] + [gamma_lim3]
                 gammas =[]
                 mini_args = (X, y, condition,gammas)
-            solver = differential_evolution(kNN,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
+            solver = differential_evolution(func_kNN,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
         elif ML=='KRR':
             gammas = []
             if gamma1==0.0: # use just structural descriptors
@@ -105,7 +105,7 @@ def main(alpha,gamma1,gamma2,gamma3,C,epsilon,alpha_lim,gamma_lim1,gamma_lim2,ga
                 bounds = [alpha_lim] + [ gamma_lim1 ] + [gamma_lim2] + [gamma_lim3]
                 gammas = []
                 mini_args = (X, y, condition,gammas)
-            solver = differential_evolution(KRR,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
+            solver = differential_evolution(func_KRR,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
         if ML=='SVR': 
             gammas = []
             if gamma1==0.0: # use just structural descriptors
@@ -142,12 +142,12 @@ def main(alpha,gamma1,gamma2,gamma3,C,epsilon,alpha_lim,gamma_lim1,gamma_lim2,ga
             condition = 3 
             gammas = []
             hyperparams=[gamma1,gamma2,gamma3]
-            kNN(hyperparams,X,y,condition,gammas)
+            func_kNN(hyperparams,X,y,condition,gammas)
         elif ML=='KRR': 
             condition = 3 
             gammas = []
             hyperparams=[alpha,gamma1,gamma2,gamma3]
-            KRR(hyperparams,X,y,condition,gammas)
+            func_KRR(hyperparams,X,y,condition,gammas)
         elif ML=='SVR': 
             condition = 3 
             gammas = []
@@ -209,61 +209,93 @@ def read_initial_values(inp):
         f_out = open('%s' %log_name,'w')
     else:
         f_out=None
-    print('### START PRINT INPUT OPTIONS ###')
-    print('ML = ', ML)
-    print('Neighbors = ', Neighbors)
-    print('alpha = ', alpha)
+    print('##### START PRINT INPUT OPTIONS ######')
+    print('######################################')
+    print('# Machine Learning Algorithm options #')
+    print('######################################')
+    print('ML =', ML)
+    print('### General hyperparameters ##########')
+    print('optimize_hyperparams = ', optimize_hyperparams)
     print('gamma1 = ', gamma1)
     print('gamma2 = ', gamma2)
     print('gamma3 = ', gamma3)
-    print('C = ', C)
-    print('epsilon = ', epsilon)
-    print('optimize_hyperparams = ', optimize_hyperparams)
-    print('alpha_lim = ', alpha_lim)
     print('gamma_lim1 = ', gamma_lim1)
     print('gamma_lim2 = ', gamma_lim2)
     print('gamma_lim3 = ', gamma_lim3)
+    print('weight_RMSE = ', weight_RMSE)
+    print('### k-Nearest Neighbors ("kNN") ######')
+    print('Neighbors = ', Neighbors)
+    print('### Kernel Ridge Regression ("KRR") ##')
+    print('alpha = ', alpha)
+    print('alpha_lim = ', alpha_lim)
+    print('### Support Vector Regression ("SVR") ########')
+    print('C = ', C)
+    print('epsilon = ', epsilon)
     print('C_lim = ', C_lim)
     print('epsilon_lim = ', epsilon_lim)
+    print('######################################')
+    print('######### Data base options ##########')
+    print('######################################')
     print('db_file = ', db_file)
+    print('Ndata = ', Ndata)
     print('elec_descrip = ', elec_descrip)
     print('xcols = ', xcols)
     print('ycols = ', ycols)
-    print('Ndata = ', Ndata)
+    print('FP_length = ', FP_length)
+    print('######################################')
+    print('############ Verbose options #########')
+    print('######################################')
     print('print_log = ', print_log)
     print('log_name = ', log_name)
+    print('######################################')
+    print('########### Parallelization ##########')
+    print('######################################')
     print('NCPU = ', NCPU)
-    #print('f_out = ', f_out)
-    print('FP_length = ', FP_length)
-    print('weight_RMSE = ', weight_RMSE)
-    print('### END PRINT INPUT OPTIONS ###')
-    if print_log==True: f_out.write('### START PRINT INPUT OPTIONS ###')
-    if print_log==True: f_out.write('ML %s\n' % str(ML))
-    if print_log==True: f_out.write('Neighbors %s\n' % str(Neighbors))
-    if print_log==True: f_out.write('alpha %s\n' % str(alpha))
-    if print_log==True: f_out.write('gamma1 %s\n' % str(gamma1))
-    if print_log==True: f_out.write('gamma2 %s\n' % str(gamma2))
-    if print_log==True: f_out.write('gamma3 %s\n' % str(gamma3))
-    if print_log==True: f_out.write('epsilon %s\n' % str(epsilon))
-    if print_log==True: f_out.write('optimize_hyperparams %s\n' % str(optimize_hyperparams))
-    if print_log==True: f_out.write('alpha_lim %s\n' % str(alpha_lim))
-    if print_log==True: f_out.write('gamma_lim1 %s\n' % str(gamma_lim1))
-    if print_log==True: f_out.write('gamma_lim2 %s\n' % str(gamma_lim2))
-    if print_log==True: f_out.write('gamma_lim3 %s\n' % str(gamma_lim3))
-    if print_log==True: f_out.write('C_lim %s\n' % str(C_lim))
-    if print_log==True: f_out.write('epsilon_lim %s\n' % str(epsilon_lim))
-    if print_log==True: f_out.write('db_file %s\n' % str(db_file))
-    if print_log==True: f_out.write('elec_descrip %s\n' % str(elec_descrip))
-    if print_log==True: f_out.write('xcols %s\n' % str(xcols))
-    if print_log==True: f_out.write('ycols %s\n' % str(ycols))
-    if print_log==True: f_out.write('Ndata %s\n' % str(Ndata))
-    if print_log==True: f_out.write('print_log %s\n' % str(print_log))
-    if print_log==True: f_out.write('log_name %s\n' % str(log_name))
-    if print_log==True: f_out.write('NCPU %s\n' % str(NCPU))
-    #if print_log==True: f_out.write('f_out %s\n' % str(f_out))
-    if print_log==True: f_out.write('FP_length %s\n' % str(FP_length))
-    if print_log==True: f_out.write('weight_RMSE %s\n' % str(weight_RMSE))
-    if print_log==True: f_out.write('### END PRINT INPUT OPTIONS ###')
+    print('####### END PRINT INPUT OPTIONS ######')
+    if print_log==True: 
+        f_out.write('##### START PRINT INPUT OPTIONS ######')
+        f_out.write('######################################')
+        f_out.write('# Machine Learning Algorithm options #')
+        f_out.write('######################################')
+        f_out.write('ML %s\n' % str(ML))
+        f_out.write('### General hyperparameters ##########')
+        f_out.write('optimize_hyperparams %s\n' % str(optimize_hyperparams))
+        f_out.write('gamma1 %s\n' % str(gamma1))
+        f_out.write('gamma2 %s\n' % str(gamma2))
+        f_out.write('gamma3 %s\n' % str(gamma3))
+        f_out.write('gamma_lim1 %s\n' % str(gamma_lim1))
+        f_out.write('gamma_lim2 %s\n' % str(gamma_lim2))
+        f_out.write('gamma_lim3 %s\n' % str(gamma_lim3))
+        f_out.write('weight_RMSE %s\n' % str(weight_RMSE))
+        f_out.write('### k-Nearest Neighbors ("kNN") ######')
+        f_out.write('Neighbors %s\n' % str(Neighbors))
+        f_out.write('### Kernel Ridge Regression ("KRR") ##')
+        f_out.write('alpha %s\n' % str(alpha))
+        f_out.write('alpha_lim %s\n' % str(alpha_lim))
+        f_out.write('### Support Vector Regression ("SVR") ########')
+        f_out.write('C %s\n' % str(C))
+        f_out.write('epsilon %s\n' % str(epsilon))
+        f_out.write('C_lim %s\n' % str(C_lim))
+        f_out.write('epsilon_lim %s\n' % str(epsilon_lim))
+        f_out.write('######################################')
+        f_out.write('######### Data base options ##########')
+        f_out.write('######################################')
+        f_out.write('db_file %s\n' % str(db_file))
+        f_out.write('Ndata %s\n' % str(Ndata))
+        f_out.write('elec_descrip %s\n' % str(elec_descrip))
+        f_out.write('xcols %s\n' % str(xcols))
+        f_out.write('ycols %s\n' % str(ycols))
+        f_out.write('FP_length %s\n' % str(FP_length))
+        f_out.write('######################################')
+        f_out.write('')
+        f_out.write('######################################')
+        f_out.write('print_log %s\n' % str(print_log))
+        f_out.write('log_name %s\n' % str(log_name))
+        f_out.write('######################################')
+        f_out.write('########### Parallelization ##########')
+        f_out.write('######################################')
+        f_out.write('NCPU %s\n' % str(NCPU))
+        f_out.write('####### END PRINT INPUT OPTIONS ######')
 
     return (ML,Neighbors,alpha,gamma1,gamma2,gamma3,C,epsilon,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE)
 
@@ -316,7 +348,7 @@ def custom_distance(X1,X2,gamma1,gamma2,gamma3):
     return distance
 
 ### Function to calculate rmse and r with k-NN ###
-def kNN(hyperparams,X,y,condition,gammas):
+def func_kNN(hyperparams,X,y,condition,gammas):
     # Assign hyperparameters
     if condition==1:
         gamma1 = gammas[0]
@@ -327,7 +359,9 @@ def kNN(hyperparams,X,y,condition,gammas):
         gamma3 = gammas[1]
     elif condition==3:
         gamma1, gamma2, gamma3 = hyperparams
-    # LOO
+    # Assign kNN parameters
+    knn = KNeighborsRegressor(n_neighbors=Neighbors, weights='distance', metric=custom_distance,metric_params={"gamma1":gamma1,"gamma2":gamma2,"gamma3":gamma3})
+    # Initialize values
     y_predicted_knn=[]
     y_real_knn=[]
     loo=LeaveOneOut()
@@ -335,40 +369,43 @@ def kNN(hyperparams,X,y,condition,gammas):
     # For each entry of LOO
     for train_index, test_index in loo.split(X, y):
         print('Step',counter," / ", Ndata,flush=True)
+        # assign train and etst indeces
         counter=counter+1
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
-        knn = KNeighborsRegressor(n_neighbors=Neighbors, weights='distance', metric=custom_distance,metric_params={"gamma1":gamma1,"gamma2":gamma2,"gamma3":gamma3})
+        # train kNN
         knn.fit(X_train, y_train)
+        # predict with  KNN
         y_pred_knn = knn.predict(X_test)
+        # add predicted values in this LOO to list with total
         y_predicted_knn.append(y_pred_knn.tolist())
         y_real_knn.append(y_test.tolist())
     # Put results together in a list
     y_real_knn_list=[]
     y_predicted_knn_list=[]
-    y_real_knn_list = [item for caca in y_real_knn for item in caca ]
-    y_predicted_knn_list = [item for caca in y_predicted_knn for item in caca ]
+    y_real_knn_list = [item for dummy in y_real_knn for item in dummy ]
+    y_predicted_knn_list = [item for dummy in y_predicted_knn for item in dummy ]
     y_real_knn_list_list=[]
     y_predicted_knn_list_list=[]
-    y_real_knn_list_list = [item for caca in y_real_knn_list for item in caca ]
-    y_predicted_knn_list_list = [item for caca in y_predicted_knn_list for item in caca ]
+    y_real_knn_list_list = [item for dummy in y_real_knn_list for item in dummy ]
+    y_predicted_knn_list_list = [item for dummy in y_predicted_knn_list for item in dummy ]
     # Calculate rmse and r
     if weight_RMSE == True:
         weights = np.square(y_real_knn_list_list) / np.linalg.norm(np.square(y_real_knn_list_list))
     else:
         weights = np.ones_like(y_real_knn_list_list)
-    r_knn, _ = pearsonr(y_real_knn_list_list, y_predicted_knn_list_list)
-    rms_knn  = sqrt(mean_squared_error(y_real_knn_list_list, y_predicted_knn_list_list,sample_weight=weights))
+    r, _ = pearsonr(y_real_knn_list_list, y_predicted_knn_list_list)
+    rms  = sqrt(mean_squared_error(y_real_knn_list_list, y_predicted_knn_list_list,sample_weight=weights))
     # Print results
     print('New k-NN call:')
-    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r_knn.tolist(), 'rmse:',rms_knn,flush=True)
+    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r.tolist(), 'rmse:',rms,flush=True)
     if print_log==True: f_out.write('New k-NN call: \n')
-    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r_knn.tolist(), rms_knn))
+    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r.tolist(), rms))
     if print_log==True: f_out.flush()
-    return rms_knn
+    return rms
 
 ### Function to calculate rmse and r with k-NN (need to be adapted to new dataset) ###
-def KRR(hyperparams,X,y,condition,gammas):
+def func_KRR(hyperparams,X,y,condition,gammas):
     # Assign hyperparameters
     if condition==1:
         gamma1 = gammas[0]
@@ -379,11 +416,12 @@ def KRR(hyperparams,X,y,condition,gammas):
         gamma3 = gammas[1]
     elif condition==3:
         alpha, gamma1, gamma2, gamma3 = hyperparams
-    # Build kernel function
+    # Build kernel function and assign KRR parameters
     kernel = build_hybrid_kernel(gamma1=gamma1,gamma2=gamma2,gamma3=gamma3)
-    # LOO
-    y_predicted_krr=[]
-    y_real_krr=[]
+    krr = KernelRidge(alpha=alpha, kernel=kernel)
+    # Initialize values
+    y_predicted_krr = []
+    y_real_krr = []
     loo = LeaveOneOut()
     y_true = []
     y_pred = []
@@ -392,39 +430,42 @@ def KRR(hyperparams,X,y,condition,gammas):
     # For each entry of LOO
     for train_index, test_index in loo.split(X, y):
         print('Step',counter," / ", Ndata,flush=True)
-        counter=counter+1
+        # assign train and etst indeces
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
-        krr = KernelRidge(alpha=alpha, kernel=kernel)
+        # train KRR
         krr.fit(X_train, y_train)
+        # predict with KRR
         y_pred_krr = krr.predict(X_test)
+        # add predicted values in this LOO to list with total
         y_predicted_krr.append(y_pred_krr.tolist())
         y_real_krr.append(y_test.tolist())
+        counter=counter+1
     # Put results together in a list
     y_real_krr_list=[]
     y_predicted_krr_list=[]
-    y_real_krr_list = [item for caca in y_real_krr for item in caca ]
-    y_predicted_krr_list = [item for caca in y_predicted_krr for item in caca ]
+    y_real_krr_list = [item for dummy in y_real_krr for item in dummy ]
+    y_predicted_krr_list = [item for dummy in y_predicted_krr for item in dummy ]
     y_real_krr_list_list=[]
     y_predicted_krr_list_list=[]
-    y_real_krr_list_list = [item for caca in y_real_krr_list for item in caca ]
-    y_predicted_krr_list_list = [item for caca in y_predicted_krr_list for item in caca ]
+    y_real_krr_list_list = [item for dummy in y_real_krr_list for item in dummy ]
+    y_predicted_krr_list_list = [item for dummy in y_predicted_krr_list for item in dummy ]
     # Calculate rmse and r
     if weight_RMSE == True:
         weights = np.square(y_real_krr_list_list) / np.linalg.norm(np.square(y_real_krr_list_list))
     else:
         weights = np.ones_like(y_real_krr_list_list)
-    r_KRR, _ = pearsonr(y_real_krr_list_list, y_predicted_krr_list_list)
-    rms_KRR  = sqrt(mean_squared_error(y_real_krr_list_list, y_predicted_krr_list_list,sample_weight=weights))
+    r, _ = pearsonr(y_real_krr_list_list, y_predicted_krr_list_list)
+    rms  = sqrt(mean_squared_error(y_real_krr_list_list, y_predicted_krr_list_list,sample_weight=weights))
     # Print results
     print('New KRR call:')
-    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r_KRR, 'rmse:',rms_KRR,flush=True)
+    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r, 'rmse:',rms,flush=True)
     print('alpha:',krr.get_params(),flush=True)
     if print_log==True: f_out.write('New KRR call: \n')
-    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r_KRR.tolist(), rms_KRR))
+    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r.tolist(), rms))
     if print_log==True: f_out.write('alpha: %s \n' %(str(krr.get_params())))
     if print_log==True: f_out.flush()
-    return rms_KRR
+    return rms
 
 ### Function to calculate rmse and r with SVR ###
 def func_SVR(hyperparams,X,y,condition,gammas):
@@ -438,11 +479,11 @@ def func_SVR(hyperparams,X,y,condition,gammas):
         gamma3 = gammas[1]
     elif condition==3:
         C, epsilon, gamma1, gamma2, gamma3 = hyperparams
-    # Build kernel function
+    # Build kernel and assign SVR parameters
     svr = SVR(kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3), C=C, epsilon=epsilon)
-    # LOO
-    y_predicted_svr=[]
-    y_real_svr=[]
+    # Initialize values
+    y_predicted_svr = []
+    y_real_svr = []
     loo = LeaveOneOut()
     y_true = []
     y_pred = []
@@ -451,38 +492,43 @@ def func_SVR(hyperparams,X,y,condition,gammas):
     # For each entry of LOO
     for train_index, test_index in loo.split(X, y):
         print('Step',counter," / ", Ndata,flush=True)
+        # assign train and etst indeces
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
+        # train SVR
         svr.fit(X_train, y_train.ravel())
+        # predict with SVR
         y_pred_svr = svr.predict(X_test)
+        # add predicted values in this LOO to list with total
         y_predicted_svr.append(y_pred_svr.tolist())
         y_real_svr.append(y_test.tolist())
         counter=counter+1
     # Put results together in a list
     y_real_svr_list=[]
     y_predicted_svr_list=[]
-    y_real_svr_list = [item for caca in y_real_svr for item in caca ]
+    y_real_svr_list = [item for dummy in y_real_svr for item in dummy ]
     y_predicted_svr_list = y_predicted_svr
     y_real_svr_list_list=[]
     y_predicted_svr_list_list=[]
-    y_real_svr_list_list = [item for caca in y_real_svr_list for item in caca ]
-    y_predicted_svr_list_list = [item for caca in y_predicted_svr_list for item in caca ]
+    y_real_svr_list_list = [item for dummy in y_real_svr_list for item in dummy ]
+    y_predicted_svr_list_list = [item for dummy in y_predicted_svr_list for item in dummy ]
     # Calculate rmse and r
     if weight_RMSE == True:
         weights = np.square(y_real_svr_list_list) / np.linalg.norm(np.square(y_real_svr_list_list))
     else:
         weights = np.ones_like(y_real_svr_list_list)
-    r_SVR, _ = pearsonr(y_real_svr_list_list, y_predicted_svr_list_list)
-    rms_SVR  = sqrt(mean_squared_error(y_real_svr_list_list, y_predicted_svr_list_list,sample_weight=weights))
+    r, _ = pearsonr(y_real_svr_list_list, y_predicted_svr_list_list)
+    rms  = sqrt(mean_squared_error(y_real_svr_list_list, y_predicted_svr_list_list,sample_weight=weights))
     # Print results
     print('New SVR call:')
-    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r_SVR, 'rmse:',rms_SVR,flush=True)
+    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r, 'rmse:',rms,flush=True)
     print('SVR parameters:',svr.get_params(),flush=True)
-    if print_log==True: f_out.write('New SVR call: \n')
-    if print_log==True: f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r_SVR.tolist(), rms_SVR))
-    if print_log==True: f_out.write('SVR parameters: %s \n' %(str(svr.get_params())))
-    if print_log==True: f_out.flush()
-    return rms_SVR
+    if print_log==True: 
+        f_out.write('New SVR call: \n')
+        f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r.tolist(), rms))
+        f_out.write('SVR parameters: %s \n' %(str(svr.get_params())))
+        f_out.flush()
+    return rms
 
 ### SVR kernel function
 def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
