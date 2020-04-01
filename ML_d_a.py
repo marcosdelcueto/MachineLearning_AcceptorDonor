@@ -9,6 +9,7 @@ import functools
 import numpy as np
 import pandas as pd 
 import matplotlib.pyplot as plt
+from matplotlib import ticker, gridspec, cm
 from math import sqrt
 from time import time
 from sklearn.svm import SVR
@@ -173,6 +174,10 @@ def read_initial_values(inp):
     NCPU = ast.literal_eval(var_value[var_name.index('NCPU')])	              # select number of CPUs (-1 means all CPUs in a node)
     FP_length = ast.literal_eval(var_value[var_name.index('FP_length')])      # select number of CPUs (-1 means all CPUs in a node)
     weight_RMSE = ast.literal_eval(var_value[var_name.index('weight_RMSE')])  # select number of CPUs (-1 means all CPUs in a node)
+    CV = ast.literal_eval(var_value[var_name.index('CV')])
+    kfold = ast.literal_eval(var_value[var_name.index('kfold')])
+    plot_target_predictions = ast.literal_eval(var_value[var_name.index('plot_target_predictions')])
+    plot_kNN_distances = ast.literal_eval(var_value[var_name.index('plot_kNN_distances')])
     # open log file to write intermediate information
     if print_log==True:
         f_out = open('%s' %log_name,'w')
@@ -183,6 +188,9 @@ def read_initial_values(inp):
     print('# Machine Learning Algorithm options #')
     print('######################################')
     print('ML =', ML)
+    print('CV =', CV)
+    print('plot_target_predictions =', plot_target_predictions)
+    if CV == 'kf': print('kfold =', kfold)
     print('### General hyperparameters ##########')
     print('optimize_hyperparams = ', optimize_hyperparams)
     print('gamma1 = ', gamma1)
@@ -194,6 +202,7 @@ def read_initial_values(inp):
     print('weight_RMSE = ', weight_RMSE)
     print('### k-Nearest Neighbors ("kNN") ######')
     print('Neighbors = ', Neighbors)
+    print('plot_kNN_distances =', plot_kNN_distances)
     print('### Kernel Ridge Regression ("KRR") ##')
     print('alpha = ', alpha)
     print('alpha_lim = ', alpha_lim)
@@ -227,6 +236,9 @@ def read_initial_values(inp):
         f_out.write('# Machine Learning Algorithm options #')
         f_out.write('######################################')
         f_out.write('ML %s\n' % str(ML))
+        f_out.write('CV %s\n' % str(CV))
+        f_out.write('plot_target_predictions %s\n' % str(plot_target_predictions))
+        if CV=='kf': f_out.write('kfold %s\n' % str(kfold))
         f_out.write('### General hyperparameters ##########')
         f_out.write('optimize_hyperparams %s\n' % str(optimize_hyperparams))
         f_out.write('gamma1 %s\n' % str(gamma1))
@@ -238,6 +250,7 @@ def read_initial_values(inp):
         f_out.write('weight_RMSE %s\n' % str(weight_RMSE))
         f_out.write('### k-Nearest Neighbors ("kNN") ######')
         f_out.write('Neighbors %s\n' % str(Neighbors))
+        f_out.write('plot_kNN_distances %s\n' % str(plot_kNN_distances))
         f_out.write('### Kernel Ridge Regression ("KRR") ##')
         f_out.write('alpha %s\n' % str(alpha))
         f_out.write('alpha_lim %s\n' % str(alpha_lim))
@@ -266,7 +279,7 @@ def read_initial_values(inp):
         f_out.write('NCPU %s\n' % str(NCPU))
         f_out.write('####### END PRINT INPUT OPTIONS ######')
 
-    return (ML,Neighbors,alpha,gamma1,gamma2,gamma3,C,epsilon,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE)
+    return (ML,Neighbors,alpha,gamma1,gamma2,gamma3,C,epsilon,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances)
 
 ### Preprocess function to scale data ###
 def preprocess_fn(X):
@@ -358,20 +371,40 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
     # Initialize values
     y_predicted = []
     y_real = []
-    loo = LeaveOneOut()
     counter = 1
-    # For each entry of LOO
-    for train_index, test_index in loo.split(X, y):
-        #print('Step',counter," / ", Ndata,flush=True)
+    # Cross-Validation
+    if CV=='kf':
+        kf = KFold(n_splits=kfold,shuffle=True)
+        validation=kf.split(X)
+    elif CV=='loo':
+        loo = LeaveOneOut()
+        validation=loo.split(X)
+    distances = []
+    rmse = []
+    #for train_index, test_index in loo.split(X, y):
+    for train_index, test_index in validation:
+        print('Step',counter," / ", Ndata,flush=True)
         # assign train and etst indeces
         counter=counter+1
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
         # predict y values
         y_pred = ML_algorithm.fit(X_train, y_train.ravel()).predict(X_test)
+        test_dist=ML_algorithm.kneighbors(X_test)
+        #print('disdances of test',test_dist)
+        dist=np.mean(test_dist[0])
+        distances.append(dist)
+        #print ("mean average of list 1: ",dist )
+        error=sqrt((float(y_pred)-float(y_test))**2)
+        #print('error',error)
+        rmse.append(error)
+        #print('rmse',rmse)
+        #print('rmse', rmse)
         # add predicted values in this LOO to list with total
         y_predicted.append(y_pred.tolist())
         y_real.append(y_test.tolist())
+    distances_array=np.array(distances)
+    rmse_array=np.array(rmse)
     # Put results in a 1D list
     y_real_list=[]
     y_predicted_list=[]
@@ -382,12 +415,18 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
     y_real_list_list = [item for dummy in y_real_list for item in dummy ]
     y_predicted_list_list = y_predicted_list
     # Calculate rmse and r
-    if weight_RMSE == True:
-        weights = np.square(y_real_list_list) / np.linalg.norm(np.square(y_real_list_list))
+    if weight_RMSE == 'PCE2':
+        weights = np.square(y_real_list_list) / np.linalg.norm(np.square(y_real_list_list)) #weights proportional to PCE**2 
+    elif weight_RMSE == 'PCE':
+        weights = y_real_list_list / np.linalg.norm(y_real_list_list) #weights proportional to PCE
     else:
         weights = np.ones_like(y_real_list_list)
     r, _ = pearsonr(y_real_list_list, y_predicted_list_list)
     rms  = sqrt(mean_squared_error(y_real_list_list, y_predicted_list_list,sample_weight=weights))
+    y_real_array=np.array(y_real_list_list)
+    y_predicted_array=np.array(y_predicted_list_list)
+    if plot_target_predictions != None: plot_scatter(y_real_array, y_predicted_array,'plot_target_predictions',plot_target_predictions)
+    if plot_kNN_distances != None: plot_scatter(distances_array, rmse_array, 'plot_kNN_distances', plot_kNN_distances)
     # Print results
     print('New', ML, 'call:')
     print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r.tolist(), 'rmse:',rms,flush=True)
@@ -587,6 +626,64 @@ def build_hybrid_kernel(gamma1,gamma2,gamma3):
 
     return hybrid_kernel
 
+### visualization and calculate pearsonr and spearmanr ###
+def plot_scatter(x, y, plot_type, plot_name):
+
+    fig = plt.figure()
+    gs = gridspec.GridSpec(1, 1)
+
+    r, _ = pearsonr(x, y)
+    rho, _ = spearmanr(x, y)
+
+    ma = np.max([x.max(), y.max()]) + 1
+
+    ax = plt.subplot(gs[0])
+    ax.scatter(x, y, color="b")
+    ax.tick_params(axis='both', which='major', direction='in', labelsize=22, pad=10, length=5)
+
+    if plot_type == 'plot_target_predictions':
+        ax.set_xlabel(r"PCE / %", size=24, labelpad=10)
+        ax.set_ylabel(r"PCE$^{k-NN}$ / %", size=24, labelpad=10)
+        ax.set_xlim(0, ma)
+        ax.set_ylim(0, ma)
+        ax.set_aspect('equal')
+    elif plot_type == 'plot_kNN_distances':
+        ax.set_xlabel(r"Distance", size=24, labelpad=10)
+        ax.set_ylabel(r"RMSE$^{k-NN}$", size=24, labelpad=10)
+
+    xtickmaj = ticker.MaxNLocator(5)
+    xtickmin = ticker.AutoMinorLocator(5)
+    ytickmaj = ticker.MaxNLocator(5)
+    ytickmin = ticker.AutoMinorLocator(5)
+    ax.xaxis.set_major_locator(xtickmaj)
+    ax.xaxis.set_minor_locator(xtickmin)
+    ax.yaxis.set_major_locator(ytickmaj)
+    ax.yaxis.set_minor_locator(ytickmin)
+    ax.xaxis.set_ticks_position('both')
+    ax.yaxis.set_ticks_position('both')
+    ax.tick_params(axis='both', which='minor', direction='in', labelsize=22, pad=10, length=2)
+    #ax.set_xlim(0, ma)
+    #ax.set_ylim(0, ma)
+    #ax.set_aspect('equal')
+
+    # xmin, xmax = ax.get_xlim()
+    # ymin, ymax = ax.get_ylim()
+    ax.plot(np.arange(0, ma + 0.1, 0.1), np.arange(0, ma + 0.1, 0.1), color="k", ls="--")
+    ax.annotate(u'$r$ = %.2f' % r, xy=(0.15,0.85), xycoords='axes fraction', size=22)
+    # ax.annotate(u'$\\rho$ = %.2f' % rho, xy=(0.15,0.75), xycoords='axes fraction', size=22)
+    plt.savefig(plot_name,dpi=600,bbox_inches='tight')
+
+    return
+
+#### Function to get FP from smiles (not used) ###
+#def preprocess_smiles(X):
+    #'''
+    #Function to preprocess SMILES.
+
+    #Parameters
+    #----------
+    #df: Pandas DataFrame.
+
 #### Function to get FP from smiles (not used) ###
 #def preprocess_smiles(X):
     #'''
@@ -668,7 +765,7 @@ def build_hybrid_kernel(gamma1,gamma2,gamma3):
 ### Run main program ###
 start = time()
 # Read input values
-(ML,Neighbors,alpha,gamma1,gamma2,gamma3,C,epsilon,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE) = read_initial_values(input_file_name)
+(ML,Neighbors,alpha,gamma1,gamma2,gamma3,C,epsilon,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances) = read_initial_values(input_file_name)
 # Execute main function
 main(alpha,gamma1,gamma2,gamma3,C,epsilon,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim)
 # Print running time and close log file
