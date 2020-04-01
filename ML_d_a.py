@@ -383,7 +383,8 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
     rmse = []
     #for train_index, test_index in loo.split(X, y):
     for train_index, test_index in validation:
-        print('Step',counter," / ", Ndata,flush=True)
+        if CV=='loo': print('Step',counter," / ", Ndata,flush=True)
+        if CV=='kf':  print('Step',counter," / ", kfold,flush=True)
         # assign train and etst indeces
         counter=counter+1
         X_train,X_test=X[train_index],X[test_index]
@@ -391,20 +392,33 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         # predict y values
         y_pred = ML_algorithm.fit(X_train, y_train.ravel()).predict(X_test)
         test_dist=ML_algorithm.kneighbors(X_test)
-        #print('disdances of test',test_dist)
-        dist=np.mean(test_dist[0])
-        distances.append(dist)
+        #print('disdances of test',test_dist[0])
+        #print('number of points', len(test_dist[0]))
+        for i in range(len(test_dist[0])):
+            dist=np.mean(test_dist[0][i])
+            distances.append(dist)
+        #distances_array=np.array(distances)
         #print ("mean average of list 1: ",dist )
-        error=sqrt((float(y_pred)-float(y_test))**2)
+        #print('y_pred:', y_pred)
+        #print('y_test:', y_test)
+        error = [sqrt((float(i - j))**2) for i, j in zip(y_pred, y_test)]
+        #error = sqrt(error**2)
         #print('error',error)
+        #error=sqrt((float(y_pred)-float(y_test))**2)
         rmse.append(error)
+        #rmse_array=np.array(rmse)
         #print('rmse',rmse)
         #print('rmse', rmse)
         # add predicted values in this LOO to list with total
         y_predicted.append(y_pred.tolist())
         y_real.append(y_test.tolist())
-    distances_array=np.array(distances)
-    rmse_array=np.array(rmse)
+    #print('distances', distances)
+    #print('rmse', rmse)
+    #distances_flat = [item for sublist in distances for item in sublist]
+    distances_flat = distances
+    distances_array=np.array(distances_flat)
+    rmse_flat = [item for sublist in rmse for item in sublist]
+    rmse_array=np.array(rmse_flat)
     # Put results in a 1D list
     y_real_list=[]
     y_predicted_list=[]
@@ -632,6 +646,7 @@ def plot_scatter(x, y, plot_type, plot_name):
     fig = plt.figure()
     gs = gridspec.GridSpec(1, 1)
 
+    #print('x,y:',x,y)
     r, _ = pearsonr(x, y)
     rho, _ = spearmanr(x, y)
 
@@ -647,6 +662,8 @@ def plot_scatter(x, y, plot_type, plot_name):
         ax.set_xlim(0, ma)
         ax.set_ylim(0, ma)
         ax.set_aspect('equal')
+        ax.plot(np.arange(0, ma + 0.1, 0.1), np.arange(0, ma + 0.1, 0.1), color="k", ls="--")
+        ax.annotate(u'$r$ = %.2f' % r, xy=(0.15,0.85), xycoords='axes fraction', size=22)
     elif plot_type == 'plot_kNN_distances':
         ax.set_xlabel(r"Distance", size=24, labelpad=10)
         ax.set_ylabel(r"RMSE$^{k-NN}$", size=24, labelpad=10)
@@ -668,8 +685,8 @@ def plot_scatter(x, y, plot_type, plot_name):
 
     # xmin, xmax = ax.get_xlim()
     # ymin, ymax = ax.get_ylim()
-    ax.plot(np.arange(0, ma + 0.1, 0.1), np.arange(0, ma + 0.1, 0.1), color="k", ls="--")
-    ax.annotate(u'$r$ = %.2f' % r, xy=(0.15,0.85), xycoords='axes fraction', size=22)
+    #ax.plot(np.arange(0, ma + 0.1, 0.1), np.arange(0, ma + 0.1, 0.1), color="k", ls="--")
+    #ax.annotate(u'$r$ = %.2f' % r, xy=(0.15,0.85), xycoords='axes fraction', size=22)
     # ax.annotate(u'$\\rho$ = %.2f' % rho, xy=(0.15,0.75), xycoords='axes fraction', size=22)
     plt.savefig(plot_name,dpi=600,bbox_inches='tight')
 
