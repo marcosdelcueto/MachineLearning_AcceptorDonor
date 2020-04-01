@@ -6,8 +6,8 @@
 ######################################
 # Machine Learning Algorithm options #
 ######################################
-ML = 'kNN'                           # 'kNN' or 'KRR' or 'SVR'
-CV = 'loo'                           # select 'loo' or 'kf'
+ML = 'KRR'                           # 'kNN' or 'KRR' or 'SVR'
+CV = 'kf'                            # select 'loo' or 'kf'
 kfold = 10                           # only used uf CV=kf
 plot_target_predictions = 'PCE_values.jpeg' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
 ### General hyperparameters ##########

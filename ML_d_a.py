@@ -642,7 +642,7 @@ def plot_scatter(x, y, plot_type, plot_name):
     # options for plot_target_predictions
     if plot_type == 'plot_target_predictions':
         ax.set_xlabel(r"PCE / %", size=24, labelpad=10)
-        ax.set_ylabel(r"PCE$^{k-NN}$ / %", size=24, labelpad=10)
+        ax.set_ylabel(r"PCE$^{%s}$ / %" %ML, size=24, labelpad=10)
         ax.set_xlim(0, ma)
         ax.set_ylim(0, ma)
         ax.set_aspect('equal')
