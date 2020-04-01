@@ -379,9 +379,8 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
     elif CV=='loo':
         loo = LeaveOneOut()
         validation=loo.split(X)
-    distances = []
-    rmse = []
-    #for train_index, test_index in loo.split(X, y):
+    kNN_distances = []
+    kNN_error = []
     for train_index, test_index in validation:
         if CV=='loo': print('Step',counter," / ", Ndata,flush=True)
         if CV=='kf':  print('Step',counter," / ", kfold,flush=True)
@@ -391,34 +390,17 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         y_train,y_test=y[train_index],y[test_index]
         # predict y values
         y_pred = ML_algorithm.fit(X_train, y_train.ravel()).predict(X_test)
-        test_dist=ML_algorithm.kneighbors(X_test)
-        #print('disdances of test',test_dist[0])
-        #print('number of points', len(test_dist[0]))
-        for i in range(len(test_dist[0])):
-            dist=np.mean(test_dist[0][i])
-            distances.append(dist)
-        #distances_array=np.array(distances)
-        #print ("mean average of list 1: ",dist )
-        #print('y_pred:', y_pred)
-        #print('y_test:', y_test)
-        error = [sqrt((float(i - j))**2) for i, j in zip(y_pred, y_test)]
-        #error = sqrt(error**2)
-        #print('error',error)
-        #error=sqrt((float(y_pred)-float(y_test))**2)
-        rmse.append(error)
-        #rmse_array=np.array(rmse)
-        #print('rmse',rmse)
-        #print('rmse', rmse)
+        # if kNN: calculate lists with kNN_distances and kNN_error
+        if ML=='kNN':
+            provi_kNN_dist=ML_algorithm.kneighbors(X_test)
+            for i in range(len(provi_kNN_dist[0])):
+                kNN_dist=np.mean(provi_kNN_dist[0][i])
+                kNN_distances.append(kNN_dist)
+            error = [sqrt((float(i - j))**2) for i, j in zip(y_pred, y_test)]
+            kNN_error.append(error)
         # add predicted values in this LOO to list with total
         y_predicted.append(y_pred.tolist())
         y_real.append(y_test.tolist())
-    #print('distances', distances)
-    #print('rmse', rmse)
-    #distances_flat = [item for sublist in distances for item in sublist]
-    distances_flat = distances
-    distances_array=np.array(distances_flat)
-    rmse_flat = [item for sublist in rmse for item in sublist]
-    rmse_array=np.array(rmse_flat)
     # Put results in a 1D list
     y_real_list=[]
     y_predicted_list=[]
@@ -432,15 +414,21 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
     if weight_RMSE == 'PCE2':
         weights = np.square(y_real_list_list) / np.linalg.norm(np.square(y_real_list_list)) #weights proportional to PCE**2 
     elif weight_RMSE == 'PCE':
-        weights = y_real_list_list / np.linalg.norm(y_real_list_list) #weights proportional to PCE
-    else:
+        weights = y_real_list_list / np.linalg.norm(y_real_list_list) # weights proportional to PCE
+    elif weight_RMSE == 'linear':
         weights = np.ones_like(y_real_list_list)
     r, _ = pearsonr(y_real_list_list, y_predicted_list_list)
     rms  = sqrt(mean_squared_error(y_real_list_list, y_predicted_list_list,sample_weight=weights))
     y_real_array=np.array(y_real_list_list)
     y_predicted_array=np.array(y_predicted_list_list)
-    if plot_target_predictions != None: plot_scatter(y_real_array, y_predicted_array,'plot_target_predictions',plot_target_predictions)
-    if plot_kNN_distances != None: plot_scatter(distances_array, rmse_array, 'plot_kNN_distances', plot_kNN_distances)
+    # Print plots
+    if plot_target_predictions != None: 
+        plot_scatter(y_real_array, y_predicted_array,'plot_target_predictions',plot_target_predictions)
+    if ML=='kNN' and plot_kNN_distances != None: 
+        kNN_distances_array=np.array(kNN_distances)
+        kNN_error_flat = [item for dummy in kNN_error for item in dummy]
+        kNN_error_array=np.array(kNN_error_flat)
+        plot_scatter(kNN_distances_array, kNN_error_array, 'plot_kNN_distances', plot_kNN_distances)
     # Print results
     print('New', ML, 'call:')
     print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r.tolist(), 'rmse:',rms,flush=True)
@@ -642,20 +630,16 @@ def build_hybrid_kernel(gamma1,gamma2,gamma3):
 
 ### visualization and calculate pearsonr and spearmanr ###
 def plot_scatter(x, y, plot_type, plot_name):
-
+    # general plot options
     fig = plt.figure()
     gs = gridspec.GridSpec(1, 1)
-
-    #print('x,y:',x,y)
     r, _ = pearsonr(x, y)
-    rho, _ = spearmanr(x, y)
-
+    #rho, _ = spearmanr(x, y)
     ma = np.max([x.max(), y.max()]) + 1
-
     ax = plt.subplot(gs[0])
     ax.scatter(x, y, color="b")
     ax.tick_params(axis='both', which='major', direction='in', labelsize=22, pad=10, length=5)
-
+    # options for plot_target_predictions
     if plot_type == 'plot_target_predictions':
         ax.set_xlabel(r"PCE / %", size=24, labelpad=10)
         ax.set_ylabel(r"PCE$^{k-NN}$ / %", size=24, labelpad=10)
@@ -664,10 +648,11 @@ def plot_scatter(x, y, plot_type, plot_name):
         ax.set_aspect('equal')
         ax.plot(np.arange(0, ma + 0.1, 0.1), np.arange(0, ma + 0.1, 0.1), color="k", ls="--")
         ax.annotate(u'$r$ = %.2f' % r, xy=(0.15,0.85), xycoords='axes fraction', size=22)
+    # options for plot_kNN_distances
     elif plot_type == 'plot_kNN_distances':
         ax.set_xlabel(r"Distance", size=24, labelpad=10)
-        ax.set_ylabel(r"RMSE$^{k-NN}$", size=24, labelpad=10)
-
+        ax.set_ylabel(r"RMSE$^{%s}$" %ML, size=24, labelpad=10)
+    # extra options in common for all plot types
     xtickmaj = ticker.MaxNLocator(5)
     xtickmin = ticker.AutoMinorLocator(5)
     ytickmaj = ticker.MaxNLocator(5)
@@ -679,17 +664,8 @@ def plot_scatter(x, y, plot_type, plot_name):
     ax.xaxis.set_ticks_position('both')
     ax.yaxis.set_ticks_position('both')
     ax.tick_params(axis='both', which='minor', direction='in', labelsize=22, pad=10, length=2)
-    #ax.set_xlim(0, ma)
-    #ax.set_ylim(0, ma)
-    #ax.set_aspect('equal')
-
-    # xmin, xmax = ax.get_xlim()
-    # ymin, ymax = ax.get_ylim()
-    #ax.plot(np.arange(0, ma + 0.1, 0.1), np.arange(0, ma + 0.1, 0.1), color="k", ls="--")
-    #ax.annotate(u'$r$ = %.2f' % r, xy=(0.15,0.85), xycoords='axes fraction', size=22)
-    # ax.annotate(u'$\\rho$ = %.2f' % rho, xy=(0.15,0.75), xycoords='axes fraction', size=22)
+    # save plot into corresponding file
     plt.savefig(plot_name,dpi=600,bbox_inches='tight')
-
     return
 
 #### Function to get FP from smiles (not used) ###

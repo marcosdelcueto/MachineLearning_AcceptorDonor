@@ -7,7 +7,7 @@
 # Machine Learning Algorithm options #
 ######################################
 ML = 'kNN'                           # 'kNN' or 'KRR' or 'SVR'
-CV = 'kf'                           # select 'loo' or 'kf'
+CV = 'loo'                           # select 'loo' or 'kf'
 kfold = 10                           # only used uf CV=kf
 plot_target_predictions = 'PCE_values.jpeg' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
 ### General hyperparameters ##########
@@ -18,7 +18,7 @@ gamma3 = 0.0                         # hyperparameter with weight of d_fp_a
 gamma_lim1 = (0.0, 2.0)         	    # range in which gamma1 is optimized
 gamma_lim2 = (0.0, 6.0)         	    # range in which gamma2 is optimized
 gamma_lim3 = (0.0, 6.0)         	    # range in which gamma3 is optimized
-weight_RMSE = 'linear'               # select one: 'linear', 'PCE', 'PCE2'. Default: 'linear'
+weight_RMSE = 'PCE2'                 # select one: 'linear', 'PCE', 'PCE2'. Default: 'linear'
 ### k-Nearest Neighbors ('kNN') ######
 Neighbors = 3                        # number of nearest-neighbors
 plot_kNN_distances = 'kNN_distances.jpeg' # decide filename for graph of kNN-distances vs rmse at each CV step is printed. If None, it is not plotted
