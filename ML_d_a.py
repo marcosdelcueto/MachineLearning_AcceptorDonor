@@ -68,57 +68,65 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
         f_out.flush()
     # Get optimimum hyperparameters
     if optimize_hyperparams==True:
-        #fixed_hyperparams = []
-        ## Use just structural descriptors
-        #if gamma_el==0.0:
-            #condition='structure'
-            #fixed_hyperparams =[gamma_el]
-            #if ML=='kNN': 
-                #hyperparams=[gamma_d,gamma_a]                
-                #bounds = [gamma_d_lim] + [gamma_a_lim]
-            #elif ML=='KRR':
-                #hyperparams=[gamma_d,gamma_a,alpha]
-                #bounds = [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
-            #elif ML=='SVR':
-                #hyperparams=[gamma_d,gamma_a,C,epsilon]
-                #bounds = [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
-        ## Use just electronic descriptors
-        #elif gamma_d==0.0 and gamma_a==0.0:
-            #condition='electronic'
-            #fixed_hyperparams =[gamma_d,gamma_a]
-            #if ML=='kNN': 
-                #hyperparams=[gamma_el]
-                #bounds = [gamma_el_lim]
-            #if ML=='KRR': 
-                #hyperparams=[gamma_el,alpha]
-                #bounds = [gamma_el_lim] + [alpha_lim]
-            #if ML=='SVR': 
-                #hyperparams=[gamma_el,C,epsilon]
-                #bounds = [gamma_el_lim] + [C_lim] + [epsilon_lim]
-        ## Use both electronic and structural descriptors
-        #else:
-            #condition='structure_and_electronic'
-            #fixed_hyperparams =[]
-            #if ML=='kNN':
-                #hyperparams=[gamma_el,gamma_d,gamma_a]
-                #bounds = [gamma_el_lim] + [gamma_d_lim] + [gamma_a_lim]
-            #if ML=='KRR':
-                #hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
-                #bounds = [gamma_el_lim] + [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
-            #if ML=='SVR':
-                #hyperparams=[gamma_el,gamma_d,gamma_a,C,epsilon]
-                #bounds = [ gamma_el_lim ] + [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
-        #mini_args = (X, y, condition,fixed_hyperparams)
-        #solver = differential_evolution(func_ML,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
-        ## print best hyperparams
-        #best_hyperparams = solver.x
-        #best_rmse = solver.fun
-        #print('Best hyperparameters:', best_hyperparams,flush=True)
-        #print('Best rmse:', best_rmse,flush=True)
-        #if print_log==True: f_out.write('Best hyperparameters: %s \n' %(str(best_hyperparams)))
-        #if print_log==True: f_out.write('Best rmse: %s \n' %(str(best_rmse)))
-        #if print_log==True: f_out.flush()
-        #hyperparams=best_hyperparams.tolist()
+        fixed_hyperparams = []
+        condition=None
+        # Use just structural descriptors
+        for i in range(len(elec_descrip)):
+            if gamma_el[i]==0.0:
+                condition = 'structure'
+                print('I AM IN CONDITION STRUCTURE')
+                fixed_hyperparams = [gamma_el]
+                if ML=='kNN': 
+                    hyperparams = [gamma_d,gamma_a]                
+                    bounds = [gamma_d_lim] + [gamma_a_lim]
+                elif ML=='KRR':
+                    hyperparams = [gamma_d,gamma_a,alpha]
+                    bounds = [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
+                elif ML=='SVR':
+                    hyperparams = [gamma_d,gamma_a,C,epsilon]
+                    bounds = [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
+                break
+        # Use just electronic descriptors
+        if gamma_d==0.0 and gamma_a==0.0 and condition != 'structure':
+            condition='electronic'
+            print('I AM IN CONDITION ELECTRONIC')
+            fixed_hyperparams =[gamma_d,gamma_a]
+            if ML=='kNN': 
+                hyperparams=[gamma_el]
+                bounds = [gamma_el_lim]*len(elec_descrip)
+            if ML=='KRR': 
+                hyperparams=[gamma_el,alpha]
+                bounds = [gamma_el_lim]*len(elec_descrip) + [alpha_lim]
+            if ML=='SVR': 
+                hyperparams=[gamma_el,C,epsilon]
+                bounds = [gamma_el_lim]*len(elec_descrip) + [C_lim] + [epsilon_lim]
+            pass
+        # Use both electronic and structural descriptors
+        elif condition != 'structure':
+            condition='structure_and_electronic'
+            print('I AM IN CONDITION STRUCTURE AND ELECTRONIC')
+            fixed_hyperparams = []
+            if ML=='kNN':
+                hyperparams=[gamma_el,gamma_d,gamma_a]
+                bounds = [gamma_el_lim]*len(elec_descrip) + [gamma_d_lim] + [gamma_a_lim]
+            if ML=='KRR':
+                hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
+                bounds = [gamma_el_lim]*len(elec_descrip) + [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
+            if ML=='SVR':
+                hyperparams=[gamma_el,gamma_d,gamma_a,C,epsilon]
+                bounds = [ gamma_el_lim ]*len(elec_descrip) + [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
+        #[item for dummy in kNN_error for item in dummy]
+        mini_args = (X, y, condition,fixed_hyperparams)
+        solver = differential_evolution(func_ML,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
+        # print best hyperparams
+        best_hyperparams = solver.x
+        best_rmse = solver.fun
+        print('Best hyperparameters:', best_hyperparams,flush=True)
+        print('Best rmse:', best_rmse,flush=True)
+        if print_log==True: f_out.write('Best hyperparameters: %s \n' %(str(best_hyperparams)))
+        if print_log==True: f_out.write('Best rmse: %s \n' %(str(best_rmse)))
+        if print_log==True: f_out.flush()
+        hyperparams=best_hyperparams.tolist()
         pass
     ## Use initial hyperparameters
     elif optimize_hyperparams==False:
@@ -127,8 +135,9 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
         if ML=='kNN': hyperparams=[gamma_el,gamma_d,gamma_a]
         if ML=='KRR': hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
         if ML=='SVR': hyperparams=[gamma_el,gamma_d,gamma_a,C,epsilon]
-        print('test outside:', hyperparams)
-        func_ML(hyperparams,X,y,condition,fixed_hyperparams)
+        flat_hyperparams = hyperparams[0] + hyperparams[1:]
+        #flat_hyperparams = list(np.array(hyperparams).flatten())
+        func_ML(flat_hyperparams,X,y,condition,fixed_hyperparams)
 ###### END MAIN ######
 #################################################################################
 
@@ -311,12 +320,10 @@ def preprocess_fn(X):
     elec_descrip_total=0
     for k in elec_descrip:
         elec_descrip_total=elec_descrip_total+k
-    #print('test elec_descrip_total', elec_descrip_total)
     for i in range(Ndata):
         X_fp_d.append(X[i][0])
         X_fp_a.append(X[i][1])
         for j in range(2,elec_descrip_total+2):
-            #print('test',i,j)
             X_el[i].append(X[i][j])
     xscaler = StandardScaler()
     X_el = xscaler.fit_transform(X_el)
@@ -340,10 +347,9 @@ def custom_distance(X1,X2,gamma_el,gamma_d,gamma_a):
     T_a = ( np.dot(np.transpose(X1[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) ) / ( np.dot(np.transpose(X1[ndesp1:ndesp2]),X1[ndesp1:ndesp2]) + np.dot(np.transpose(X2[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) - np.dot(np.transpose(X1[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) )
     d_fp_d = 1 - T_d
     d_fp_a = 1 - T_a
-    print('croqueta d_fp_d', d_fp_d)
-    print('croqueta d_fp_a', d_fp_a)
+
     distance = distance + gamma_d*d_fp_d + gamma_a*d_fp_a
-    print('croqueta X1, X2:', X1[0:10], X2[0:10])
+
     # Calculate distance for electronic properties
     ini = 0
     fin = elec_descrip[0]
@@ -352,51 +358,54 @@ def custom_distance(X1,X2,gamma_el,gamma_d,gamma_a):
         for i in range(ini,fin):
             d_el[j] = d_el[j] + (X1[i]-X2[i])**2
         d_el[j] = d_el[j]**(1.0/2.0)
-        print('croqueta d_el[j]', j, d_el[j])
+
         distance = distance + gamma_el[j] * d_el[j]
+
         if j < len(elec_descrip)-1:
             ini = elec_descrip[j]
             fin = elec_descrip[j] + elec_descrip[j+1]
-    # Calculate final distance
-    #distance = gamma_el*d_el+gamma_d*d_fp_d+gamma_a*d_fp_a
-    print('croqueta final distance:', distance)
     return distance
 
 
 ### ML Function to calculate rmse and r ###
 def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
-    print('test inside:', hyperparams)
     # Assign hyperparameters
     if condition=='structure':
         gamma_el = fixed_hyperparams[0]
         gamma_d = hyperparams[0]
         gamma_a = hyperparams[1]
+
         if ML=='KRR': 
             alpha = hyperparams[2]
         if ML=='SVR':
             C = hyperparams[2]
             epsilon = hyperparams[3]
     elif condition=='electronic':
+        gamma_el = []
+        counter=0
+        for i in range(len(elec_descrip)):
+            gamma_el.append(hyperparams[i])
+            counter=counter+1
         gamma_d = fixed_hyperparams[0]
         gamma_a = fixed_hyperparams[1]
-        gamma_el = hyperparams[0]
         if ML=='KRR':
-            alpha = hyperparams[1]
+            alpha = hyperparams[i]
         if ML=='SVR':
-            C = hyperparams[1]
-            epsilon = hyperparams[2]
+            C = hyperparams[i]
+            epsilon = hyperparams[i+1]
     elif condition=='structure_and_electronic':
-        gamma_el = hyperparams[0]
-        gamma_d = hyperparams[1]
-        gamma_a = hyperparams[2]
+        gamma_el = []
+        for i in range(len(elec_descrip)):
+            gamma_el.append(hyperparams[i])
+        gamma_d = hyperparams[i]
+        gamma_a = hyperparams[i+1]
         if ML=='KRR':
-            alpha = hyperparams[3]
+            alpha = hyperparams[i+2]
         if ML=='SVR':
-            C = hyperparams[3]
-            epsilon = hyperparams[4]
+            C = hyperparams[i+2]
+            epsilon = hyperparams[i+3]
     # Build kernel function and assign ML parameters
     if ML=='kNN':
-
         ML_algorithm = KNeighborsRegressor(n_neighbors=Neighbors, weights='distance', metric=custom_distance,metric_params={"gamma_el":gamma_el,"gamma_d":gamma_d,"gamma_a":gamma_a})
     elif ML=='KRR':
         kernel = build_hybrid_kernel(gamma_el=gamma_el,gamma_d=gamma_d,gamma_a=gamma_a)
@@ -452,10 +461,7 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         weights = y_real_list_list / np.linalg.norm(y_real_list_list) # weights proportional to PCE
     elif weight_RMSE == 'linear':
         weights = np.ones_like(y_real_list_list)
-    print('croqueta real values:', y_real_list_list)
-    print('croqueta predicted values:', y_predicted_list_list)
     r, _ = pearsonr(y_real_list_list, y_predicted_list_list)
-    print('croqueta r:', r)
     rms  = sqrt(mean_squared_error(y_real_list_list, y_predicted_list_list,sample_weight=weights))
     y_real_array=np.array(y_real_list_list)
     y_predicted_array=np.array(y_predicted_list_list)
@@ -513,9 +519,7 @@ def kernel_SVR(_x1, _x2, gamma_el, gamma_d, gamma_a):
             D_el  = euclidean_distances(Xi_el, Xj_el)
             D2_el = np.square(D_el)
             K_el[k] = np.exp(-gamma_el[k]*D2_el)
-            print('croqueta K_el[i]', i, K_el[k])
             K = K * K_el[k]
-            print('croqueta intermediate K:', K)
             if k < len(elec_descrip)-1:
                 ini = elec_descrip[k]
                 fin = elec_descrip[k] + elec_descrip[k+1]
@@ -564,7 +568,6 @@ def kernel_SVR(_x1, _x2, gamma_el, gamma_d, gamma_a):
         K_fp_a = np.exp(-gamma_a*D2_fp_a)
     # Calculate final kernel
     K = K * K_fp_d * K_fp_a
-    print('croqueta final K:', K)
     #K = np.exp(-gamma_el*np.square(euclidean_distances(Xi_el, Xj_el)) - gamma_d*np.square(1-(np.dot(Xi_fp_d, Xj_fp_d.T) / (Xii_d + Xjj_d - np.dot(Xi_fp_d, Xj_fp_d.T)))) - gamma_a*np.square(1-(np.dot(Xi_fp_a, Xj_fp_a.T) / (Xii_a + Xjj_a - np.dot(Xi_fp_a, Xj_fp_a.T)))))
     #print('K just before return:', K)
     return K
@@ -681,9 +684,7 @@ def build_hybrid_kernel(gamma_el,gamma_d,gamma_a):
             Xj_el.append(_x2[ini:fin].reshape(1,-1))
             K_el.append(1.0)
             if gamma_el[i] != 0.0: K_el[i] = gaussian_kernel(Xi_el[i], Xj_el[i], gamma_el[i])
-            #print('croqueta K_el[i]', i, K_el[i])
             K = K * K_el[i]
-            #print('croqueta intermediate K:', K)
             if i < len(elec_descrip)-1:
                 ini = elec_descrip[i]
                 fin = elec_descrip[i] + elec_descrip[i+1]
@@ -698,7 +699,6 @@ def build_hybrid_kernel(gamma_el,gamma_d,gamma_a):
         if gamma_a != 0.0: K_fp_a = tanimoto_kernel(Xi_fp_a, Xj_fp_a, gamma_a)
         # Element-wise multiplication
         K = K * K_fp_d * K_fp_a
-        #print('croqueta final K:', K)
         return K
 
     return hybrid_kernel

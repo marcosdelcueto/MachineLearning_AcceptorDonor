@@ -12,9 +12,9 @@ kfold = 2                            # only used uf CV=kf
 plot_target_predictions = 'PCE_values.jpeg' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
 ### General hyperparameters ##########
 optimize_hyperparams = False    	    # whether hyperparameters are optimized (True) or just use initial values (False). If gammaX=0.0, then that hyperparam is not optimized anyway
-gamma_el = [1.0,1.0,1.0]             # hyperparameter with weight of d_el
-gamma_d  = 0.0                       # hyperparameter with weight of d_fp_d
-gamma_a  = 0.0                       # hyperparameter with weight of d_fp_a
+gamma_el = [0.0,0.0,0.0]             # hyperparameter with weight of d_el
+gamma_d  = 1.0                       # hyperparameter with weight of d_fp_d
+gamma_a  = 1.0                       # hyperparameter with weight of d_fp_a
 gamma_el_lim = (0.0, 2.0)         	 # range in which gamma_el is optimized
 gamma_d_lim  = (0.0, 6.0)         	 # range in which gamma_d is optimized
 gamma_a_lim  = (0.0, 6.0)         	 # range in which gamma_a is optimized
@@ -50,5 +50,5 @@ log_name  = 'log_ML_d_a.log'         # name of log file
 ######################################
 ########### Parallelization ##########
 ######################################
-NCPU = 4                             # select number of CPUs (-1 means all CPUs in a node) (ONLY USED IF "optimize_hyperparams = True")
+NCPU = 1                             # select number of CPUs (-1 means all CPUs in a node) (ONLY USED IF "optimize_hyperparams = True")
 ######################################
