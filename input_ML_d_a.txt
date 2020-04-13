@@ -6,18 +6,18 @@
 ######################################
 # Machine Learning Algorithm options #
 ######################################
-ML = 'KRR'                           # 'kNN' or 'KRR' or 'SVR'
-CV = 'kf'                            # select 'loo' or 'kf'
-kfold = 10                           # only used uf CV=kf
+ML = 'kNN'                           # 'kNN' or 'KRR' or 'SVR'
+CV = 'loo'                            # select 'loo' or 'kf'
+kfold = 5                            # only used uf CV=kf
 plot_target_predictions = 'PCE_values.jpeg' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
 ### General hyperparameters ##########
 optimize_hyperparams = False    	    # whether hyperparameters are optimized (True) or just use initial values (False). If gammaX=0.0, then that hyperparam is not optimized anyway
-gamma1 = 1.0                         # hyperparameter with weight of d_el
-gamma2 = 0.0                         # hyperparameter with weight of d_fp_d
-gamma3 = 0.0                         # hyperparameter with weight of d_fp_a
-gamma_lim1 = (0.0, 2.0)         	    # range in which gamma1 is optimized
-gamma_lim2 = (0.0, 6.0)         	    # range in which gamma2 is optimized
-gamma_lim3 = (0.0, 6.0)         	    # range in which gamma3 is optimized
+gamma_el = [1.0,1.0,1.0]             # hyperparameter with weight of d_el
+gamma_d  = 0.0                       # hyperparameter with weight of d_fp_d
+gamma_a  = 0.0                       # hyperparameter with weight of d_fp_a
+gamma_el_lim = (0.0, 2.0)         	 # range in which gamma_el is optimized
+gamma_d_lim  = (0.0, 6.0)         	 # range in which gamma_d is optimized
+gamma_a_lim  = (0.0, 6.0)         	 # range in which gamma_a is optimized
 weight_RMSE = 'PCE2'                 # select one: 'linear', 'PCE', 'PCE2'. Default: 'linear'
 ### k-Nearest Neighbors ('kNN') ######
 Neighbors = 3                        # number of nearest-neighbors
@@ -33,12 +33,13 @@ epsilon_lim = (0.001,10)             # range in which epsilon is optimized
 ######################################
 ######### Data base options ##########
 ######################################
-db_file = 'db_new.csv'               # name of input file with database
-Ndata = 566                          # number of d/a pairs
-elec_descrip = 5                	    # number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
-xcols = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","SMILES-DFP","SMILES-AFP"]      																						# specify which descriptors are used
-#xcols = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","sum of f-D","XLOGP3-D","sum of f-A","XLOGP3-A","SMILES-DFP","SMILES-AFP"]      					# specify which descriptors are used
-#xcols = ["HOMO-D","LL+1-D","Efund-D","Ebind-D","sum of f-D","transition DM-D","Rot. Bonds-D","XLOGP3-D","E(T1)-scf-D","SMILES-DFP","SMILES-AFP"]     # specify which descriptors are used
+db_file = 'db_new_short.csv'         # name of input file with database
+Ndata = 5                           # number of d/a pairs
+elec_descrip = [5,2,2]          	    # number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
+xcols_struc = ["SMILES-DFP","SMILES-AFP"]
+xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A"]
+xcols_elec1 = ["sum of f-D", "sum of f-A"]
+xcols_elec2 = ["XLOGP3-D","XLOGP3-A"]
 ycols = [ "PCE" ]               	    # specify which is target property
 FP_length = 2048						    # number of entries of each fingerprint
 ######################################

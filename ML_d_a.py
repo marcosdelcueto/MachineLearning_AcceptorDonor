@@ -36,92 +36,98 @@ input_file_name = 'input_ML_d_a.txt'  # name of input file
 
 #################################################################################
 ###### START MAIN ######
-def main(alpha,gamma1,gamma2,gamma3,C,epsilon,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim):
+def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim):
     # Read data
     df=pd.read_csv(db_file,index_col=0)
     # Preprocess data
     #df=preprocess_smiles(df) (not needed, we're reading directly FP)
-    X=df[xcols].values
+    print('xcols:',xcols)
+    xcols_flat = [item for sublist in xcols for item in sublist]
+    print('xcols_flat:',xcols_flat)
+    X=df[xcols_flat].values
     y=df[ycols].values
     for i in range(Ndata):
         X_d=[]
         X_a=[]
-        X1=X[i][elec_descrip][1:-1].split()
-        X2=X[i][elec_descrip+1][1:-1].split()
+        X1=X[i][0][1:-1].split()
+        X2=X[i][1][1:-1].split()
         for j in range(FP_length):
             X_d.append(int(float(X1[j])))
             X_a.append(int(float(X2[j])))
-        X[i][elec_descrip]=X_d
-        X[i][elec_descrip+1]=X_a
+        X[i][0]=X_d
+        X[i][1]=X_a
     X=preprocess_fn(X)
-    # Print some verbose info
+    ## Print some verbose info
     print('X:',flush=True)
     print(X,flush=True)
     print('Entries for each a/d pair:',len(X[0]))
-    if print_log==True: f_out.write('X: \n')
-    if print_log==True: f_out.write('%s \n' %(str(X)))
-    if print_log==True: f_out.write('Entries for each a/d pair: %i \n' %(len(X[0])))
-    if print_log==True: f_out.flush()
+    if print_log==True: 
+        f_out.write('X: \n')
+        f_out.write('%s \n' %(str(X)))
+        f_out.write('Entries for each a/d pair: %i \n' %(len(X[0])))
+        f_out.flush()
     # Get optimimum hyperparameters
     if optimize_hyperparams==True:
-        fixed_hyperparams = []
-        # Use just structural descriptors
-        if gamma1==0.0:
-            condition='structure'
-            fixed_hyperparams =[gamma1]
-            if ML=='kNN': 
-                hyperparams=[gamma2,gamma3]                
-                bounds = [gamma_lim2] + [gamma_lim3]
-            elif ML=='KRR':
-                hyperparams=[gamma2,gamma3,alpha]
-                bounds = [gamma_lim2] + [gamma_lim3] + [alpha_lim]
-            elif ML=='SVR':
-                hyperparams=[gamma2,gamma3,C,epsilon]
-                bounds = [gamma_lim2] + [gamma_lim3] + [C_lim] + [epsilon_lim]
-        # Use just electronic descriptors
-        elif gamma2==0.0 and gamma3==0.0:
-            condition='electronic'
-            fixed_hyperparams =[gamma2,gamma3]
-            if ML=='kNN': 
-                hyperparams=[gamma1]
-                bounds = [gamma_lim1]
-            if ML=='KRR': 
-                hyperparams=[gamma1,alpha]
-                bounds = [gamma_lim1] + [alpha_lim]
-            if ML=='SVR': 
-                hyperparams=[gamma1,C,epsilon]
-                bounds = [gamma_lim1] + [C_lim] + [epsilon_lim]
-        # Use both electronic and structural descriptors
-        else:
-            condition='structure_and_electronic'
-            fixed_hyperparams =[]
-            if ML=='kNN':
-                hyperparams=[gamma1,gamma2,gamma3]
-                bounds = [gamma_lim1] + [gamma_lim2] + [gamma_lim3]
-            if ML=='KRR':
-                hyperparams=[gamma1,gamma2,gamma3,alpha]
-                bounds = [gamma_lim1] + [gamma_lim2] + [gamma_lim3] + [alpha_lim]
-            if ML=='SVR':
-                hyperparams=[gamma1,gamma2,gamma3,C,epsilon]
-                bounds = [ gamma_lim1 ] + [gamma_lim2] + [gamma_lim3] + [C_lim] + [epsilon_lim]
-        mini_args = (X, y, condition,fixed_hyperparams)
-        solver = differential_evolution(func_ML,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
-        # print best hyperparams
-        best_hyperparams = solver.x
-        best_rmse = solver.fun
-        print('Best hyperparameters:', best_hyperparams,flush=True)
-        print('Best rmse:', best_rmse,flush=True)
-        if print_log==True: f_out.write('Best hyperparameters: %s \n' %(str(best_hyperparams)))
-        if print_log==True: f_out.write('Best rmse: %s \n' %(str(best_rmse)))
-        if print_log==True: f_out.flush()
-        hyperparams=best_hyperparams.tolist()
-    # Use initial hyperparameters
+        #fixed_hyperparams = []
+        ## Use just structural descriptors
+        #if gamma_el==0.0:
+            #condition='structure'
+            #fixed_hyperparams =[gamma_el]
+            #if ML=='kNN': 
+                #hyperparams=[gamma_d,gamma_a]                
+                #bounds = [gamma_d_lim] + [gamma_a_lim]
+            #elif ML=='KRR':
+                #hyperparams=[gamma_d,gamma_a,alpha]
+                #bounds = [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
+            #elif ML=='SVR':
+                #hyperparams=[gamma_d,gamma_a,C,epsilon]
+                #bounds = [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
+        ## Use just electronic descriptors
+        #elif gamma_d==0.0 and gamma_a==0.0:
+            #condition='electronic'
+            #fixed_hyperparams =[gamma_d,gamma_a]
+            #if ML=='kNN': 
+                #hyperparams=[gamma_el]
+                #bounds = [gamma_el_lim]
+            #if ML=='KRR': 
+                #hyperparams=[gamma_el,alpha]
+                #bounds = [gamma_el_lim] + [alpha_lim]
+            #if ML=='SVR': 
+                #hyperparams=[gamma_el,C,epsilon]
+                #bounds = [gamma_el_lim] + [C_lim] + [epsilon_lim]
+        ## Use both electronic and structural descriptors
+        #else:
+            #condition='structure_and_electronic'
+            #fixed_hyperparams =[]
+            #if ML=='kNN':
+                #hyperparams=[gamma_el,gamma_d,gamma_a]
+                #bounds = [gamma_el_lim] + [gamma_d_lim] + [gamma_a_lim]
+            #if ML=='KRR':
+                #hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
+                #bounds = [gamma_el_lim] + [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
+            #if ML=='SVR':
+                #hyperparams=[gamma_el,gamma_d,gamma_a,C,epsilon]
+                #bounds = [ gamma_el_lim ] + [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
+        #mini_args = (X, y, condition,fixed_hyperparams)
+        #solver = differential_evolution(func_ML,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
+        ## print best hyperparams
+        #best_hyperparams = solver.x
+        #best_rmse = solver.fun
+        #print('Best hyperparameters:', best_hyperparams,flush=True)
+        #print('Best rmse:', best_rmse,flush=True)
+        #if print_log==True: f_out.write('Best hyperparameters: %s \n' %(str(best_hyperparams)))
+        #if print_log==True: f_out.write('Best rmse: %s \n' %(str(best_rmse)))
+        #if print_log==True: f_out.flush()
+        #hyperparams=best_hyperparams.tolist()
+        pass
+    ## Use initial hyperparameters
     elif optimize_hyperparams==False:
         condition='structure_and_electronic'
         fixed_hyperparams = []
-        if ML=='kNN': hyperparams=[gamma1,gamma2,gamma3]
-        if ML=='KRR': hyperparams=[gamma1,gamma2,gamma3,alpha]
-        if ML=='SVR': hyperparams=[gamma1,gamma2,gamma3,C,epsilon]
+        if ML=='kNN': hyperparams=[gamma_el,gamma_d,gamma_a]
+        if ML=='KRR': hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
+        if ML=='SVR': hyperparams=[gamma_el,gamma_d,gamma_a,C,epsilon]
+        print('test outside:', hyperparams)
         func_ML(hyperparams,X,y,condition,fixed_hyperparams)
 ###### END MAIN ######
 #################################################################################
@@ -152,21 +158,24 @@ def read_initial_values(inp):
     ML = ast.literal_eval(var_value[var_name.index('ML')])               # 'kNN' or 'KRR' or 'SVR'
     Neighbors = ast.literal_eval(var_value[var_name.index('Neighbors')]) # number of nearest-neighbors (only used for kNN)
     alpha  = ast.literal_eval(var_value[var_name.index('alpha')])       # kernel hyperparameter (only used for KRR)
-    gamma1 = ast.literal_eval(var_value[var_name.index('gamma1')])     # hyperparameter with weight of d_el
-    gamma2 = ast.literal_eval(var_value[var_name.index('gamma2')])     # hyperparameter with weight of d_fp_d
-    gamma3 = ast.literal_eval(var_value[var_name.index('gamma3')])     # hyperparameter with weight of d_fp_a
+    gamma_el = ast.literal_eval(var_value[var_name.index('gamma_el')])     # hyperparameter with weight of d_el
+    gamma_d = ast.literal_eval(var_value[var_name.index('gamma_d')])     # hyperparameter with weight of d_fp_d
+    gamma_a = ast.literal_eval(var_value[var_name.index('gamma_a')])     # hyperparameter with weight of d_fp_a
     C = ast.literal_eval(var_value[var_name.index('C')])               # SVR hyperparameter
     epsilon = ast.literal_eval(var_value[var_name.index('epsilon')])   # SVR hyperparameter
     optimize_hyperparams = ast.literal_eval(var_value[var_name.index('optimize_hyperparams')])# whether hyperparameters are optimized (T) or just use initial values (F). If hyperparam=0.0, then that one is not optimized
     alpha_lim  = ast.literal_eval(var_value[var_name.index('alpha_lim')])     # range in which alpha hyperparam is optimized (only used for KRR)
-    gamma_lim1 = ast.literal_eval(var_value[var_name.index('gamma_lim1')])    # range in which gamma1 is optimized
-    gamma_lim2 = ast.literal_eval(var_value[var_name.index('gamma_lim2')])    # range in which gamma1 is optimized
-    gamma_lim3 = ast.literal_eval(var_value[var_name.index('gamma_lim3')])    # range in which gamma1 is optimized
+    gamma_el_lim = ast.literal_eval(var_value[var_name.index('gamma_el_lim')])    # range in which gamma_el is optimized
+    gamma_d_lim = ast.literal_eval(var_value[var_name.index('gamma_d_lim')])    # range in which gamma_el is optimized
+    gamma_a_lim = ast.literal_eval(var_value[var_name.index('gamma_a_lim')])    # range in which gamma_el is optimized
     C_lim = ast.literal_eval(var_value[var_name.index('C_lim')])    # range in which C is optimized
     epsilon_lim = ast.literal_eval(var_value[var_name.index('epsilon_lim')])    # range in which epsilon is optimized
     db_file = ast.literal_eval(var_value[var_name.index('db_file')])    # name of input file with database
     elec_descrip = ast.literal_eval(var_value[var_name.index('elec_descrip')])# number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
-    xcols = ast.literal_eval(var_value[var_name.index('xcols')])              # specify which descriptors are used
+    xcols = []
+    xcols.append(ast.literal_eval(var_value[var_name.index('xcols_struc')]))              # specify which descriptors are used
+    for i in range(len(elec_descrip)):
+        xcols.append(ast.literal_eval(var_value[var_name.index('xcols_elec'+str(i))]))              # specify which descriptors are used
     ycols = ast.literal_eval(var_value[var_name.index('ycols')])              # specify which is target property
     Ndata = ast.literal_eval(var_value[var_name.index('Ndata')])              # number of d/a pairs
     print_log = ast.literal_eval(var_value[var_name.index('print_log')])      # choose whether information is also written into a log file (Default: True)
@@ -193,12 +202,12 @@ def read_initial_values(inp):
     if CV == 'kf': print('kfold =', kfold)
     print('### General hyperparameters ##########')
     print('optimize_hyperparams = ', optimize_hyperparams)
-    print('gamma1 = ', gamma1)
-    print('gamma2 = ', gamma2)
-    print('gamma3 = ', gamma3)
-    print('gamma_lim1 = ', gamma_lim1)
-    print('gamma_lim2 = ', gamma_lim2)
-    print('gamma_lim3 = ', gamma_lim3)
+    print('gamma_el = ', gamma_el)
+    print('gamma_d = ', gamma_d)
+    print('gamma_a = ', gamma_a)
+    print('gamma_el_lim = ', gamma_el_lim)
+    print('gamma_d_lim = ', gamma_d_lim)
+    print('gamma_a_lim = ', gamma_a_lim)
     print('weight_RMSE = ', weight_RMSE)
     print('### k-Nearest Neighbors ("kNN") ######')
     print('Neighbors = ', Neighbors)
@@ -241,12 +250,12 @@ def read_initial_values(inp):
         if CV=='kf': f_out.write('kfold %s\n' % str(kfold))
         f_out.write('### General hyperparameters ##########')
         f_out.write('optimize_hyperparams %s\n' % str(optimize_hyperparams))
-        f_out.write('gamma1 %s\n' % str(gamma1))
-        f_out.write('gamma2 %s\n' % str(gamma2))
-        f_out.write('gamma3 %s\n' % str(gamma3))
-        f_out.write('gamma_lim1 %s\n' % str(gamma_lim1))
-        f_out.write('gamma_lim2 %s\n' % str(gamma_lim2))
-        f_out.write('gamma_lim3 %s\n' % str(gamma_lim3))
+        f_out.write('gamma_el %s\n' % str(gamma_el))
+        f_out.write('gamma_d %s\n' % str(gamma_d))
+        f_out.write('gamma_a %s\n' % str(gamma_a))
+        f_out.write('gamma_el_lim %s\n' % str(gamma_el_lim))
+        f_out.write('gamma_d_lim %s\n' % str(gamma_d_lim))
+        f_out.write('gamma_a_lim %s\n' % str(gamma_a_lim))
         f_out.write('weight_RMSE %s\n' % str(weight_RMSE))
         f_out.write('### k-Nearest Neighbors ("kNN") ######')
         f_out.write('Neighbors %s\n' % str(Neighbors))
@@ -279,12 +288,12 @@ def read_initial_values(inp):
         f_out.write('NCPU %s\n' % str(NCPU))
         f_out.write('####### END PRINT INPUT OPTIONS ######')
 
-    return (ML,Neighbors,alpha,gamma1,gamma2,gamma3,C,epsilon,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances)
+    return (ML,Neighbors,alpha,gamma_el,gamma_d,gamma_a,C,epsilon,optimize_hyperparams,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances)
 
 ### Preprocess function to scale data ###
 def preprocess_fn(X):
     '''
-    Function to preprocess raw data for the KRR.
+    Function to preprocess raw data
 
     Parameters
     ----------
@@ -299,11 +308,16 @@ def preprocess_fn(X):
     X_el=[[] for j in range(Ndata)]
     X_fp_d=[]
     X_fp_a=[]
+    elec_descrip_total=0
+    for k in elec_descrip:
+        elec_descrip_total=elec_descrip_total+k
+    #print('test elec_descrip_total', elec_descrip_total)
     for i in range(Ndata):
-        for j in range(elec_descrip):
+        X_fp_d.append(X[i][0])
+        X_fp_a.append(X[i][1])
+        for j in range(2,elec_descrip_total+2):
+            #print('test',i,j)
             X_el[i].append(X[i][j])
-        X_fp_d.append(X[i][elec_descrip])
-        X_fp_a.append(X[i][elec_descrip+1])
     xscaler = StandardScaler()
     X_el = xscaler.fit_transform(X_el)
     X = np.c_[ X_el,X_fp_d,X_fp_a]
@@ -311,50 +325,67 @@ def preprocess_fn(X):
     return X
 
 ### Function to calculate custom metric for electronic and structural properties ###
-def custom_distance(X1,X2,gamma1,gamma2,gamma3):
-    d_el=0.0
-    d_fp=0.0
-    # Calculate distance for electronic properties
-    for i in range(0,elec_descrip):
-        d_el = d_el + (X1[i]-X2[i])**2
-    d_el = d_el**(1.0/2.0)
+def custom_distance(X1,X2,gamma_el,gamma_d,gamma_a):
+    d_el = []
+    distance = 0.0
+    #d_fp=0.0
     # Calculate distances for FP
     ndesp1 = elec_descrip + FP_length
     ndesp2 = elec_descrip + FP_length + FP_length
+    ndesp = FP_length+FP_length
     T_d = ( np.dot(np.transpose(X1[elec_descrip:ndesp1]),X2[elec_descrip:ndesp1]) ) / ( np.dot(np.transpose(X1[elec_descrip:ndesp1]),X1[elec_descrip:ndesp1]) + np.dot(np.transpose(X2[elec_descrip:ndesp1]),X2[elec_descrip:ndesp1]) - np.dot(np.transpose(X1[elec_descrip:ndesp1]),X2[elec_descrip:ndesp1]) )
     T_a = ( np.dot(np.transpose(X1[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) ) / ( np.dot(np.transpose(X1[ndesp1:ndesp2]),X1[ndesp1:ndesp2]) + np.dot(np.transpose(X2[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) - np.dot(np.transpose(X1[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) )
     d_fp_d = 1 - T_d
     d_fp_a = 1 - T_a
+    print('croqueta d_fp_d', d_fp_d)
+    print('croqueta d_fp_a', d_fp_a)
+    distance = distance + gamma_d*d_fp_d + gamma_a*d_fp_a
+    print('croqueta X1, X2:', X1[0:10], X2[0:10])
+    # Calculate distance for electronic properties
+    ini = 0
+    fin = elec_descrip[0]
+    for j in range(len(elec_descrip)):
+        d_el.append(0.0)
+        for i in range(ini,fin):
+            d_el[j] = d_el[j] + (X1[i]-X2[i])**2
+        d_el[j] = d_el[j]**(1.0/2.0)
+        print('croqueta d_el[j]', j, d_el[j])
+        distance = distance + gamma_el[j] * d_el[j]
+        if j < len(elec_descrip)-1:
+            ini = elec_descrip[j]
+            fin = elec_descrip[j] + elec_descrip[j+1]
     # Calculate final distance
-    distance=gamma1*d_el+gamma2*d_fp_d+gamma3*d_fp_a
+    #distance = gamma_el*d_el+gamma_d*d_fp_d+gamma_a*d_fp_a
+    print('croqueta final distance:', distance)
     return distance
 
 
 ### ML Function to calculate rmse and r ###
 def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
+    print('test inside:', hyperparams)
     # Assign hyperparameters
     if condition=='structure':
-        gamma1 = fixed_hyperparams[0]
-        gamma2 = hyperparams[0]
-        gamma3 = hyperparams[1]
+        gamma_el = fixed_hyperparams[0]
+        gamma_d = hyperparams[0]
+        gamma_a = hyperparams[1]
         if ML=='KRR': 
             alpha = hyperparams[2]
         if ML=='SVR':
             C = hyperparams[2]
             epsilon = hyperparams[3]
     elif condition=='electronic':
-        gamma2 = fixed_hyperparams[0]
-        gamma3 = fixed_hyperparams[1]
-        gamma1 = hyperparams[0]
+        gamma_d = fixed_hyperparams[0]
+        gamma_a = fixed_hyperparams[1]
+        gamma_el = hyperparams[0]
         if ML=='KRR':
             alpha = hyperparams[1]
         if ML=='SVR':
             C = hyperparams[1]
             epsilon = hyperparams[2]
     elif condition=='structure_and_electronic':
-        gamma1 = hyperparams[0]
-        gamma2 = hyperparams[1]
-        gamma3 = hyperparams[2]
+        gamma_el = hyperparams[0]
+        gamma_d = hyperparams[1]
+        gamma_a = hyperparams[2]
         if ML=='KRR':
             alpha = hyperparams[3]
         if ML=='SVR':
@@ -362,12 +393,13 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
             epsilon = hyperparams[4]
     # Build kernel function and assign ML parameters
     if ML=='kNN':
-        ML_algorithm = KNeighborsRegressor(n_neighbors=Neighbors, weights='distance', metric=custom_distance,metric_params={"gamma1":gamma1,"gamma2":gamma2,"gamma3":gamma3})
+
+        ML_algorithm = KNeighborsRegressor(n_neighbors=Neighbors, weights='distance', metric=custom_distance,metric_params={"gamma_el":gamma_el,"gamma_d":gamma_d,"gamma_a":gamma_a})
     elif ML=='KRR':
-        kernel = build_hybrid_kernel(gamma1=gamma1,gamma2=gamma2,gamma3=gamma3)
+        kernel = build_hybrid_kernel(gamma_el=gamma_el,gamma_d=gamma_d,gamma_a=gamma_a)
         ML_algorithm = KernelRidge(alpha=alpha, kernel=kernel)
     elif ML=='SVR':
-        ML_algorithm = SVR(kernel=functools.partial(kernel_SVR, gamma1=gamma1, gamma2=gamma2, gamma3=gamma3), C=C, epsilon=epsilon)
+        ML_algorithm = SVR(kernel=functools.partial(kernel_SVR, gamma_el=gamma_el, gamma_d=gamma_d, gamma_a=gamma_a), C=C, epsilon=epsilon)
     # Initialize values
     y_predicted = []
     y_real = []
@@ -389,10 +421,14 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
         # predict y values
+        print('croqueta before calling ML_algorithm')
         y_pred = ML_algorithm.fit(X_train, y_train.ravel()).predict(X_test)
+        print('croqueta after calling ML_algorithm')
         # if kNN: calculate lists with kNN_distances and kNN_error
         if ML=='kNN':
+            print('croqueta before calling ML_algorithm')
             provi_kNN_dist=ML_algorithm.kneighbors(X_test)
+            print('croqueta after calling ML_algorithm')
             for i in range(len(provi_kNN_dist[0])):
                 kNN_dist=np.mean(provi_kNN_dist[0][i])
                 kNN_distances.append(kNN_dist)
@@ -431,16 +467,16 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         plot_scatter(kNN_distances_array, kNN_error_array, 'plot_kNN_distances', plot_kNN_distances)
     # Print results
     print('New', ML, 'call:')
-    print('gamma1:', gamma1, 'gamma2:', gamma2, 'gamma3:', gamma3, 'r:', r.tolist(), 'rmse:',rms,flush=True)
+    print('gamma_el:', gamma_el, 'gamma_d:', gamma_d, 'gamma_a:', gamma_a, 'r:', r.tolist(), 'rmse:',rms,flush=True)
     if print_log==True: 
         f_out.write('New %s call: \n' %(ML))
-        f_out.write('gamma1: %f, gamma2: %f gamma3: %f, r: %f, rmse: %f \n' %(gamma1, gamma2, gamma3, r.tolist(), rms))
+        f_out.write('gamma_el: %s, gamma_d: %f gamma_a: %f, r: %f, rmse: %f \n' %(str(gamma_el), gamma_d, gamma_a, r.tolist(), rms))
         if ML=='KRR' or ML=='SVR': f_out.write('hyperparameters: %s \n' %(str(ML_algorithm.get_params())))
         f_out.flush()
     return rms 
 
 ### SVR kernel function
-def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
+def kernel_SVR(_x1, _x2, gamma_el, gamma_d, gamma_a):
     # Initialize kernel values
     K_el   = 1.0
     K_fp_d = 1.0
@@ -448,7 +484,7 @@ def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
     size_matrix1=_x1.shape[0]
     size_matrix2=_x2.shape[0]
     ### K_el ###
-    if gamma1 != 0.0:
+    if gamma_el != 0.0:
         # define Xi_el
         Xi_el = [[] for j in range(size_matrix1)]
         for i in range(size_matrix1):
@@ -464,9 +500,9 @@ def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
         # calculate K_el
         D_el  = euclidean_distances(Xi_el, Xj_el)
         D2_el = np.square(D_el)
-        K_el  = np.exp(-gamma1*D2_el)
+        K_el  = np.exp(-gamma_el*D2_el)
     ### K_fp_d ###
-    if gamma2 != 0.0:
+    if gamma_d != 0.0:
         # define Xi_fp_d
         Xi_fp_d = [[] for j in range(size_matrix1)]
         for i in range(size_matrix1):
@@ -485,9 +521,9 @@ def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
         T_d = np.dot(Xi_fp_d, Xj_fp_d.T) / (Xii_d + Xjj_d - np.dot(Xi_fp_d, Xj_fp_d.T))
         D_fp_d  = 1 - T_d
         D2_fp_d = np.square(D_fp_d)
-        K_fp_d = np.exp(-gamma2*D2_fp_d)
+        K_fp_d = np.exp(-gamma_d*D2_fp_d)
     ### K_fp_a ###
-    if gamma3 != 0.0:
+    if gamma_a != 0.0:
         # define Xi_fp_a
         Xi_fp_a = [[] for j in range(size_matrix1)]
         for i in range(size_matrix1):
@@ -506,10 +542,10 @@ def kernel_SVR(_x1, _x2, gamma1, gamma2, gamma3):
         T_d = np.dot(Xi_fp_a, Xj_fp_a.T) / (Xii_a + Xjj_a - np.dot(Xi_fp_a, Xj_fp_a.T))
         D_fp_a  = 1 - T_d
         D2_fp_a = np.square(D_fp_a)
-        K_fp_a = np.exp(-gamma3*D2_fp_a)
+        K_fp_a = np.exp(-gamma_a*D2_fp_a)
     # Calculate final kernel
     K=K_el*K_fp_d*K_fp_a
-    #K = np.exp(-gamma1*np.square(euclidean_distances(Xi_el, Xj_el)) - gamma2*np.square(1-(np.dot(Xi_fp_d, Xj_fp_d.T) / (Xii_d + Xjj_d - np.dot(Xi_fp_d, Xj_fp_d.T)))) - gamma3*np.square(1-(np.dot(Xi_fp_a, Xj_fp_a.T) / (Xii_a + Xjj_a - np.dot(Xi_fp_a, Xj_fp_a.T)))))
+    #K = np.exp(-gamma_el*np.square(euclidean_distances(Xi_el, Xj_el)) - gamma_d*np.square(1-(np.dot(Xi_fp_d, Xj_fp_d.T) / (Xii_d + Xjj_d - np.dot(Xi_fp_d, Xj_fp_d.T)))) - gamma_a*np.square(1-(np.dot(Xi_fp_a, Xj_fp_a.T) / (Xii_a + Xjj_a - np.dot(Xi_fp_a, Xj_fp_a.T)))))
     #print('K just before return:', K)
     return K
 
@@ -574,15 +610,15 @@ def tanimoto_kernel(Xi, Xj, gamma):
     return K
 
 ### KRR Kernel function ###
-def build_hybrid_kernel(gamma1,gamma2,gamma3):
+def build_hybrid_kernel(gamma_el,gamma_d,gamma_a):
     '''
     Parameters
     ----------
-    gamma1: float.
+    gamma_el: float.
         gaussian kernel hyperparameter.
-    gamma2: float.
+    gamma_d: float.
         Donor Tanimoto kernel hyperparameter.
-    gamma3: float.
+    gamma_a: float.
         Acceptor Tanimoto kernel hyperparameter.
 
     Returns
@@ -619,9 +655,9 @@ def build_hybrid_kernel(gamma1,gamma2,gamma3):
         K_el = 1.0
         K_fp_d = 1.0
         K_fp_a = 1.0
-        if gamma1 != 0.0: K_el = gaussian_kernel(Xi_el, Xj_el, gamma1)
-        if gamma2 != 0.0: K_fp_d = tanimoto_kernel(Xi_fp_d, Xj_fp_d, gamma2)
-        if gamma3 != 0.0: K_fp_a = tanimoto_kernel(Xi_fp_a, Xj_fp_a, gamma3)
+        if gamma_el != 0.0: K_el = gaussian_kernel(Xi_el, Xj_el, gamma_el)
+        if gamma_d != 0.0: K_fp_d = tanimoto_kernel(Xi_fp_d, Xj_fp_d, gamma_d)
+        if gamma_a != 0.0: K_fp_a = tanimoto_kernel(Xi_fp_a, Xj_fp_a, gamma_a)
         # Element-wise multiplication
         K = K_el * K_fp_d * K_fp_a
         return K
@@ -758,9 +794,9 @@ def plot_scatter(x, y, plot_type, plot_name):
 ### Run main program ###
 start = time()
 # Read input values
-(ML,Neighbors,alpha,gamma1,gamma2,gamma3,C,epsilon,optimize_hyperparams,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances) = read_initial_values(input_file_name)
+(ML,Neighbors,alpha,gamma_el,gamma_d,gamma_a,C,epsilon,optimize_hyperparams,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances) = read_initial_values(input_file_name)
 # Execute main function
-main(alpha,gamma1,gamma2,gamma3,C,epsilon,alpha_lim,gamma_lim1,gamma_lim2,gamma_lim3,C_lim,epsilon_lim)
+main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim)
 # Print running time and close log file
 time_taken = time()-start
 print ('Process took %0.2f seconds' %time_taken,flush=True)
