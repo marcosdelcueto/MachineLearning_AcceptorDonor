@@ -6,9 +6,9 @@
 ######################################
 # Machine Learning Algorithm options #
 ######################################
-ML = 'kNN'                           # 'kNN' or 'KRR' or 'SVR'
-CV = 'loo'                            # select 'loo' or 'kf'
-kfold = 5                            # only used uf CV=kf
+ML = 'SVR'                           # 'kNN' or 'KRR' or 'SVR'
+CV = 'loo'                           # select 'loo' or 'kf'
+kfold = 2                            # only used uf CV=kf
 plot_target_predictions = 'PCE_values.jpeg' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
 ### General hyperparameters ##########
 optimize_hyperparams = False    	    # whether hyperparameters are optimized (True) or just use initial values (False). If gammaX=0.0, then that hyperparam is not optimized anyway
@@ -33,8 +33,8 @@ epsilon_lim = (0.001,10)             # range in which epsilon is optimized
 ######################################
 ######### Data base options ##########
 ######################################
-db_file = 'db_new_short.csv'         # name of input file with database
-Ndata = 5                           # number of d/a pairs
+db_file = 'db_new.csv'         # name of input file with database
+Ndata = 20                           # number of d/a pairs
 elec_descrip = [5,2,2]          	    # number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
 xcols_struc = ["SMILES-DFP","SMILES-AFP"]
 xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A"]

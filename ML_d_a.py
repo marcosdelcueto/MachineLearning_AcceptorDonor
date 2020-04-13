@@ -330,10 +330,13 @@ def custom_distance(X1,X2,gamma_el,gamma_d,gamma_a):
     distance = 0.0
     #d_fp=0.0
     # Calculate distances for FP
-    ndesp1 = elec_descrip + FP_length
-    ndesp2 = elec_descrip + FP_length + FP_length
+    elec_descrip_total=0
+    for k in elec_descrip:
+        elec_descrip_total=elec_descrip_total+k
+    ndesp1 = elec_descrip_total + FP_length
+    ndesp2 = elec_descrip_total + FP_length + FP_length
     ndesp = FP_length+FP_length
-    T_d = ( np.dot(np.transpose(X1[elec_descrip:ndesp1]),X2[elec_descrip:ndesp1]) ) / ( np.dot(np.transpose(X1[elec_descrip:ndesp1]),X1[elec_descrip:ndesp1]) + np.dot(np.transpose(X2[elec_descrip:ndesp1]),X2[elec_descrip:ndesp1]) - np.dot(np.transpose(X1[elec_descrip:ndesp1]),X2[elec_descrip:ndesp1]) )
+    T_d = ( np.dot(np.transpose(X1[elec_descrip_total:ndesp1]),X2[elec_descrip_total:ndesp1]) ) / ( np.dot(np.transpose(X1[elec_descrip_total:ndesp1]),X1[elec_descrip_total:ndesp1]) + np.dot(np.transpose(X2[elec_descrip_total:ndesp1]),X2[elec_descrip_total:ndesp1]) - np.dot(np.transpose(X1[elec_descrip_total:ndesp1]),X2[elec_descrip_total:ndesp1]) )
     T_a = ( np.dot(np.transpose(X1[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) ) / ( np.dot(np.transpose(X1[ndesp1:ndesp2]),X1[ndesp1:ndesp2]) + np.dot(np.transpose(X2[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) - np.dot(np.transpose(X1[ndesp1:ndesp2]),X2[ndesp1:ndesp2]) )
     d_fp_d = 1 - T_d
     d_fp_a = 1 - T_a
@@ -421,14 +424,10 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         X_train,X_test=X[train_index],X[test_index]
         y_train,y_test=y[train_index],y[test_index]
         # predict y values
-        print('croqueta before calling ML_algorithm')
         y_pred = ML_algorithm.fit(X_train, y_train.ravel()).predict(X_test)
-        print('croqueta after calling ML_algorithm')
         # if kNN: calculate lists with kNN_distances and kNN_error
         if ML=='kNN':
-            print('croqueta before calling ML_algorithm')
             provi_kNN_dist=ML_algorithm.kneighbors(X_test)
-            print('croqueta after calling ML_algorithm')
             for i in range(len(provi_kNN_dist[0])):
                 kNN_dist=np.mean(provi_kNN_dist[0][i])
                 kNN_distances.append(kNN_dist)
@@ -453,7 +452,10 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         weights = y_real_list_list / np.linalg.norm(y_real_list_list) # weights proportional to PCE
     elif weight_RMSE == 'linear':
         weights = np.ones_like(y_real_list_list)
+    print('croqueta real values:', y_real_list_list)
+    print('croqueta predicted values:', y_predicted_list_list)
     r, _ = pearsonr(y_real_list_list, y_predicted_list_list)
+    print('croqueta r:', r)
     rms  = sqrt(mean_squared_error(y_real_list_list, y_predicted_list_list,sample_weight=weights))
     y_real_array=np.array(y_real_list_list)
     y_predicted_array=np.array(y_predicted_list_list)
@@ -478,42 +480,59 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
 ### SVR kernel function
 def kernel_SVR(_x1, _x2, gamma_el, gamma_d, gamma_a):
     # Initialize kernel values
-    K_el   = 1.0
+    K_el   = []
     K_fp_d = 1.0
     K_fp_a = 1.0
     size_matrix1=_x1.shape[0]
     size_matrix2=_x2.shape[0]
+
+    elec_descrip_total=0
+    for k in elec_descrip:
+        elec_descrip_total=elec_descrip_total+k
+
     ### K_el ###
-    if gamma_el != 0.0:
-        # define Xi_el
-        Xi_el = [[] for j in range(size_matrix1)]
-        for i in range(size_matrix1):
-            for j in range(elec_descrip):
-                Xi_el[i].append(_x1[i][j])
-        Xi_el = np.array(Xi_el)
-        # define Xj_el
-        Xj_el = [[] for j in range(size_matrix2)]
-        for i in range(size_matrix2):
-            for j in range(elec_descrip):
-                Xj_el[i].append(_x2[i][j])
-        Xj_el = np.array(Xj_el)
-        # calculate K_el
-        D_el  = euclidean_distances(Xi_el, Xj_el)
-        D2_el = np.square(D_el)
-        K_el  = np.exp(-gamma_el*D2_el)
+    ini = 0
+    fin = elec_descrip[0]
+    K = 1.0
+    for k in range(len(elec_descrip)):
+        K_el.append(1.0)
+        if gamma_el[k] != 0.0:
+            # define Xi_el
+            Xi_el = [[] for j in range(size_matrix1)]
+            for i in range(size_matrix1):
+                for j in range(elec_descrip[k]):
+                    Xi_el[i].append(_x1[i][j])
+            Xi_el = np.array(Xi_el)
+            # define Xj_el
+            Xj_el = [[] for j in range(size_matrix2)]
+            for i in range(size_matrix2):
+                for j in range(elec_descrip[k]):
+                    Xj_el[i].append(_x2[i][j])
+            Xj_el = np.array(Xj_el)
+            # calculate K_el
+            D_el  = euclidean_distances(Xi_el, Xj_el)
+            D2_el = np.square(D_el)
+            K_el[k] = np.exp(-gamma_el[k]*D2_el)
+            print('croqueta K_el[i]', i, K_el[k])
+            K = K * K_el[k]
+            print('croqueta intermediate K:', K)
+            if k < len(elec_descrip)-1:
+                ini = elec_descrip[k]
+                fin = elec_descrip[k] + elec_descrip[k+1]
+
     ### K_fp_d ###
     if gamma_d != 0.0:
         # define Xi_fp_d
         Xi_fp_d = [[] for j in range(size_matrix1)]
         for i in range(size_matrix1):
             for j in range(FP_length):
-                Xi_fp_d[i].append(_x1[i][j+elec_descrip])
+                Xi_fp_d[i].append(_x1[i][j+elec_descrip_total])
         Xi_fp_d = np.array(Xi_fp_d)
         # define Xj_fp_d
         Xj_fp_d = [[] for j in range(size_matrix2)]
         for i in range(size_matrix2):
             for j in range(FP_length):
-                Xj_fp_d[i].append(_x2[i][j+elec_descrip])
+                Xj_fp_d[i].append(_x2[i][j+elec_descrip_total])
         Xj_fp_d = np.array(Xj_fp_d)
         # calculate K_fp_d
         Xii_d = np.repeat(np.linalg.norm(Xi_fp_d, axis=1, keepdims=True)**2, size_matrix2, axis=1)
@@ -528,13 +547,13 @@ def kernel_SVR(_x1, _x2, gamma_el, gamma_d, gamma_a):
         Xi_fp_a = [[] for j in range(size_matrix1)]
         for i in range(size_matrix1):
             for j in range(FP_length):
-                Xi_fp_a[i].append(_x1[i][j+elec_descrip])
+                Xi_fp_a[i].append(_x1[i][j+elec_descrip_total])
         Xi_fp_a = np.array(Xi_fp_a)
         # define Xj_fp_a
         Xj_fp_a = [[] for j in range(size_matrix2)]
         for i in range(size_matrix2):
             for j in range(FP_length):
-                Xj_fp_a[i].append(_x2[i][j+elec_descrip])
+                Xj_fp_a[i].append(_x2[i][j+elec_descrip_total])
         Xj_fp_a = np.array(Xj_fp_a)
         # calculate K_fp_a
         Xii_a = np.repeat(np.linalg.norm(Xi_fp_a, axis=1, keepdims=True)**2, size_matrix2, axis=1)
@@ -544,7 +563,8 @@ def kernel_SVR(_x1, _x2, gamma_el, gamma_d, gamma_a):
         D2_fp_a = np.square(D_fp_a)
         K_fp_a = np.exp(-gamma_a*D2_fp_a)
     # Calculate final kernel
-    K=K_el*K_fp_d*K_fp_a
+    K = K * K_fp_d * K_fp_a
+    print('croqueta final K:', K)
     #K = np.exp(-gamma_el*np.square(euclidean_distances(Xi_el, Xj_el)) - gamma_d*np.square(1-(np.dot(Xi_fp_d, Xj_fp_d.T) / (Xii_d + Xjj_d - np.dot(Xi_fp_d, Xj_fp_d.T)))) - gamma_a*np.square(1-(np.dot(Xi_fp_a, Xj_fp_a.T) / (Xii_a + Xjj_a - np.dot(Xi_fp_a, Xj_fp_a.T)))))
     #print('K just before return:', K)
     return K
@@ -644,22 +664,41 @@ def build_hybrid_kernel(gamma_el,gamma_d,gamma_a):
             Kernel matrix element.
         '''
         # Split electronic data from fingerprints
-        ndesp1 = elec_descrip + FP_length
-        Xi_el = _x1[:elec_descrip].reshape(1,-1)
-        Xi_fp_d = _x1[elec_descrip:ndesp1].reshape(1,-1)
+        elec_descrip_total=0
+        for k in elec_descrip:
+            elec_descrip_total=elec_descrip_total+k
+        ndesp1 = elec_descrip_total + FP_length
+
+        # Calculate electronic kernel
+        Xi_el = []
+        Xj_el = []
+        K_el = []
+        ini = 0
+        fin = elec_descrip[0]
+        K = 1.0
+        for i in range(len(elec_descrip)):
+            Xi_el.append(_x1[ini:fin].reshape(1,-1))
+            Xj_el.append(_x2[ini:fin].reshape(1,-1))
+            K_el.append(1.0)
+            if gamma_el[i] != 0.0: K_el[i] = gaussian_kernel(Xi_el[i], Xj_el[i], gamma_el[i])
+            #print('croqueta K_el[i]', i, K_el[i])
+            K = K * K_el[i]
+            #print('croqueta intermediate K:', K)
+            if i < len(elec_descrip)-1:
+                ini = elec_descrip[i]
+                fin = elec_descrip[i] + elec_descrip[i+1]
+        # Calculate structure kernel
+        Xi_fp_d = _x1[elec_descrip_total:ndesp1].reshape(1,-1)
         Xi_fp_a = _x1[ndesp1:].reshape(1,-1)
-        Xj_el = _x2[:elec_descrip].reshape(1,-1)
-        Xj_fp_d = _x2[elec_descrip:ndesp1].reshape(1,-1)
+        Xj_fp_d = _x2[elec_descrip_total:ndesp1].reshape(1,-1)
         Xj_fp_a = _x2[ndesp1:].reshape(1,-1)
-        # Compute kernels separately
-        K_el = 1.0
         K_fp_d = 1.0
         K_fp_a = 1.0
-        if gamma_el != 0.0: K_el = gaussian_kernel(Xi_el, Xj_el, gamma_el)
         if gamma_d != 0.0: K_fp_d = tanimoto_kernel(Xi_fp_d, Xj_fp_d, gamma_d)
         if gamma_a != 0.0: K_fp_a = tanimoto_kernel(Xi_fp_a, Xj_fp_a, gamma_a)
         # Element-wise multiplication
-        K = K_el * K_fp_d * K_fp_a
+        K = K * K_fp_d * K_fp_a
+        #print('croqueta final K:', K)
         return K
 
     return hybrid_kernel
