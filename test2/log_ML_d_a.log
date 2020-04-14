@@ -1,0 +1,42 @@
+##### START PRINT INPUT OPTIONS ############################################# Machine Learning Algorithm options #######################################ML kNN
+CV loo
+plot_target_predictions PCE_values.jpeg
+### General hyperparameters ##########optimize_hyperparams False
+gamma_el [0.746]
+gamma_d 10.44
+gamma_a 6.6493
+gamma_el_lim [(0.0, 2.0), (0.0, 2.0), (0.0, 2.0)]
+gamma_d_lim (0.0, 6.0)
+gamma_a_lim (0.0, 6.0)
+weight_RMSE linear
+### k-Nearest Neighbors ("kNN") ######Neighbors 3
+plot_kNN_distances kNN_distances.jpeg
+### Kernel Ridge Regression ("KRR") ##alpha 1.0
+alpha_lim (0.0, 2.0)
+### Support Vector Regression ("SVR") ########C 1.0
+epsilon 0.1
+C_lim (0.01, 10)
+epsilon_lim (0.001, 10)
+############################################### Data base options ################################################db_file db_new.csv
+Ndata 566
+xcols [['SMILES-DFP', 'SMILES-AFP'], ['HOMO-D', 'LL+1-D', 'Efund-D', 'Ebind-D', 'sum of f-D', 'transition DM-D', 'Rot. Bonds-D', 'XLOGP3-D', 'E(T1)-scf-D']]
+ycols ['PCE']
+FP_length 2048
+############################################################################print_log True
+log_name log_ML_d_a.log
+################################################# Parallelization ################################################NCPU 1
+####### END PRINT INPUT OPTIONS ######X: 
+[[-1.25693716  0.14605406 -0.56254066 ...  0.          0.
+   0.        ]
+ [-1.25693716  0.14605406 -0.56254066 ...  0.          0.
+   0.        ]
+ [-0.17343665 -0.36028643 -1.36088101 ...  0.          0.
+   0.        ]
+ ...
+ [ 0.69990564 -0.62704971 -1.24458359 ...  0.          0.
+   0.        ]
+ [-0.64608819 -0.5936335  -0.32746921 ...  0.          0.
+   0.        ]
+ [-0.19388006 -0.80432552 -0.4870859  ...  0.          0.
+   0.        ]] 
+Entries for each a/d pair: 4105 

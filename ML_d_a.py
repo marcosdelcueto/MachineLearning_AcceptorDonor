@@ -130,10 +130,13 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
     elif optimize_hyperparams==False:
         condition='structure_and_electronic'
         fixed_hyperparams = []
+
         if ML=='kNN': hyperparams=[gamma_el,gamma_d,gamma_a]
         if ML=='KRR': hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
         if ML=='SVR': hyperparams=[gamma_el,gamma_d,gamma_a,C,epsilon]
         flat_hyperparams = hyperparams[0] + hyperparams[1:]
+        print('OUTSIDE hyperparams', hyperparams)
+        print('OUTSIDE flat_hyperparams', flat_hyperparams)
         func_ML(flat_hyperparams,X,y,condition,fixed_hyperparams)
 ###### END MAIN ######
 #################################################################################
@@ -370,6 +373,7 @@ def custom_distance(X1,X2,gamma_el,gamma_d,gamma_a):
 
 ### ML Function to calculate rmse and r ###
 def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
+    print('INSIDE hyperparams', hyperparams)
     # Assign hyperparameters
     if condition=='structure':
         gamma_el = fixed_hyperparams[0]
@@ -390,21 +394,24 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         gamma_d = fixed_hyperparams[0]
         gamma_a = fixed_hyperparams[1]
         if ML=='KRR':
-            alpha = hyperparams[i]
+            alpha = hyperparams[i+1]
         if ML=='SVR':
-            C = hyperparams[i]
-            epsilon = hyperparams[i+1]
+            C = hyperparams[i+1]
+            epsilon = hyperparams[i+2]
     elif condition=='structure_and_electronic':
         gamma_el = []
         for i in range(len(elec_descrip)):
             gamma_el.append(hyperparams[i])
-        gamma_d = hyperparams[i]
-        gamma_a = hyperparams[i+1]
+        gamma_d = hyperparams[i+1]
+        gamma_a = hyperparams[i+2]
+        print('INSIDE gamma_el', gamma_el)
+        print('INSIDE gamma_d', gamma_d)
+        print('INSIDE gamma_a', gamma_a)
         if ML=='KRR':
-            alpha = hyperparams[i+2]
+            alpha = hyperparams[i+3]
         if ML=='SVR':
-            C = hyperparams[i+2]
-            epsilon = hyperparams[i+3]
+            C = hyperparams[i+3]
+            epsilon = hyperparams[i+4]
     # Build kernel function and assign ML parameters
     if ML=='kNN':
         ML_algorithm = KNeighborsRegressor(n_neighbors=Neighbors, weights='distance', metric=custom_distance,metric_params={"gamma_el":gamma_el,"gamma_d":gamma_d,"gamma_a":gamma_a})
