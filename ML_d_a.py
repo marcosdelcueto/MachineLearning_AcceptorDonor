@@ -135,8 +135,6 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
         if ML=='KRR': hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
         if ML=='SVR': hyperparams=[gamma_el,gamma_d,gamma_a,C,epsilon]
         flat_hyperparams = hyperparams[0] + hyperparams[1:]
-        print('OUTSIDE hyperparams', hyperparams)
-        print('OUTSIDE flat_hyperparams', flat_hyperparams)
         func_ML(flat_hyperparams,X,y,condition,fixed_hyperparams)
 ###### END MAIN ######
 #################################################################################
@@ -373,7 +371,6 @@ def custom_distance(X1,X2,gamma_el,gamma_d,gamma_a):
 
 ### ML Function to calculate rmse and r ###
 def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
-    print('INSIDE hyperparams', hyperparams)
     # Assign hyperparameters
     if condition=='structure':
         gamma_el = fixed_hyperparams[0]
@@ -404,9 +401,6 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
             gamma_el.append(hyperparams[i])
         gamma_d = hyperparams[i+1]
         gamma_a = hyperparams[i+2]
-        print('INSIDE gamma_el', gamma_el)
-        print('INSIDE gamma_d', gamma_d)
-        print('INSIDE gamma_a', gamma_a)
         if ML=='KRR':
             alpha = hyperparams[i+3]
         if ML=='SVR':

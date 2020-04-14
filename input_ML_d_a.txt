@@ -22,7 +22,7 @@ log_name  = 'log_ML_d_a.log'         # name of log file
 ######################################
 # Any number of electronic descriptors can be specified, classified in any group. Use notation: xcols_elec0, xcols_elec1 etc.
 db_file = 'db_new.csv'               # name of input file with database
-Ndata = 566                          # number of d/a pairs
+Ndata = 66                          # number of d/a pairs
 xcols_struc = ["SMILES-DFP","SMILES-AFP"]                    # name of descriptors that will be affected by gamma_d and gamma_a, respectively
 xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A"] # name of descriptors affected by gamma_el[0]
 xcols_elec1 = ["sum of f-D", "sum of f-A"]                   # name of descriptors affected by gamma_el[1]
@@ -32,7 +32,7 @@ FP_length = 2048						    # number of entries of each fingerprint
 ######################################
 # Machine Learning Algorithm options #
 ######################################
-ML = 'kNN'                           # 'kNN' or 'KRR' or 'SVR'
+ML = 'SVR'                           # 'kNN' or 'KRR' or 'SVR'
 CV = 'loo'                           # select 'loo' or 'kf'
 kfold = 2                            # only used uf CV=kf
 plot_target_predictions = 'PCE_values.jpeg' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
