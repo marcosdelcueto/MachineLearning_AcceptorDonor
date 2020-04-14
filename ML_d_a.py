@@ -2,6 +2,7 @@
 # Marcos del Cueto
 # Department of Chemistry and MIF, University of Liverpool
 #################################################################################
+import re
 import sys
 import ast
 import math
@@ -30,7 +31,7 @@ from sklearn.neighbors import KNeighborsRegressor, DistanceMetric
 #################################################################################
 ####### START CUSTOMIZABLE PARAMETERS #######
 input_file_name = 'input_ML_d_a.txt'  # name of input file
-# The rest of input options are inside the file 'input_file_name'
+# The rest of input options are inside the spacified file
 #######  END CUSTOMIZABLE PARAMETERS  #######
 #################################################################################
 
@@ -74,7 +75,7 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
         for i in range(len(elec_descrip)):
             if gamma_el[i]==0.0:
                 condition = 'structure'
-                print('I AM IN CONDITION STRUCTURE')
+                print('CONDITION=',condition)
                 fixed_hyperparams = [gamma_el]
                 if ML=='kNN': 
                     hyperparams = [gamma_d,gamma_a]                
@@ -89,33 +90,31 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
         # Use just electronic descriptors
         if gamma_d==0.0 and gamma_a==0.0 and condition != 'structure':
             condition='electronic'
-            print('I AM IN CONDITION ELECTRONIC')
+            print('CONDITION=',condition)
             fixed_hyperparams =[gamma_d,gamma_a]
             if ML=='kNN': 
                 hyperparams=[gamma_el]
-                bounds = [gamma_el_lim]*len(elec_descrip)
+                bounds = gamma_el_lim
             if ML=='KRR': 
                 hyperparams=[gamma_el,alpha]
-                bounds = [gamma_el_lim]*len(elec_descrip) + [alpha_lim]
+                bounds = gamma_el_lim + [alpha_lim]
             if ML=='SVR': 
                 hyperparams=[gamma_el,C,epsilon]
-                bounds = [gamma_el_lim]*len(elec_descrip) + [C_lim] + [epsilon_lim]
-            pass
+                bounds = gamma_el_lim + [C_lim] + [epsilon_lim]
         # Use both electronic and structural descriptors
         elif condition != 'structure':
             condition='structure_and_electronic'
-            print('I AM IN CONDITION STRUCTURE AND ELECTRONIC')
+            print('CONDITION=',condition)
             fixed_hyperparams = []
             if ML=='kNN':
                 hyperparams=[gamma_el,gamma_d,gamma_a]
-                bounds = [gamma_el_lim]*len(elec_descrip) + [gamma_d_lim] + [gamma_a_lim]
+                bounds = gamma_el_lim + [gamma_d_lim] + [gamma_a_lim]
             if ML=='KRR':
                 hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
-                bounds = [gamma_el_lim]*len(elec_descrip) + [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
+                bounds = gamma_el_lim + [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
             if ML=='SVR':
                 hyperparams=[gamma_el,gamma_d,gamma_a,C,epsilon]
-                bounds = [ gamma_el_lim ]*len(elec_descrip) + [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
-        #[item for dummy in kNN_error for item in dummy]
+                bounds = gamma_el_lim + [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
         mini_args = (X, y, condition,fixed_hyperparams)
         solver = differential_evolution(func_ML,bounds,args=mini_args,popsize=15,tol=0.01,polish=False,workers=NCPU,updating='deferred')
         # print best hyperparams
@@ -127,7 +126,6 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
         if print_log==True: f_out.write('Best rmse: %s \n' %(str(best_rmse)))
         if print_log==True: f_out.flush()
         hyperparams=best_hyperparams.tolist()
-        pass
     ## Use initial hyperparameters
     elif optimize_hyperparams==False:
         condition='structure_and_electronic'
@@ -136,7 +134,6 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
         if ML=='KRR': hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
         if ML=='SVR': hyperparams=[gamma_el,gamma_d,gamma_a,C,epsilon]
         flat_hyperparams = hyperparams[0] + hyperparams[1:]
-        #flat_hyperparams = list(np.array(hyperparams).flatten())
         func_ML(flat_hyperparams,X,y,condition,fixed_hyperparams)
 ###### END MAIN ######
 #################################################################################
@@ -157,34 +154,39 @@ def read_initial_values(inp):
     for line in f1:
         if not line.startswith("#") and line.strip(): 
             input_info.append(line.split('#',1)[0].strip())
+
     # read names and values of variables
+    number_elec_descrip=0
     for i in range(len(input_info)):
         var_name.append(input_info[i].split('=')[0].strip())
         var_value.append(input_info[i].split('=')[1].strip())
+        if re.match(r'xcols_elec.+', input_info[i]) != None: number_elec_descrip=number_elec_descrip+1
     # close input file
     f_in.close()
     # assign input variables    
     ML = ast.literal_eval(var_value[var_name.index('ML')])               # 'kNN' or 'KRR' or 'SVR'
     Neighbors = ast.literal_eval(var_value[var_name.index('Neighbors')]) # number of nearest-neighbors (only used for kNN)
-    alpha  = ast.literal_eval(var_value[var_name.index('alpha')])       # kernel hyperparameter (only used for KRR)
-    gamma_el = ast.literal_eval(var_value[var_name.index('gamma_el')])     # hyperparameter with weight of d_el
+    alpha  = ast.literal_eval(var_value[var_name.index('alpha')])        # kernel hyperparameter (only used for KRR)
+    gamma_el = ast.literal_eval(var_value[var_name.index('gamma_el')])   # hyperparameter with weight of d_el
     gamma_d = ast.literal_eval(var_value[var_name.index('gamma_d')])     # hyperparameter with weight of d_fp_d
     gamma_a = ast.literal_eval(var_value[var_name.index('gamma_a')])     # hyperparameter with weight of d_fp_a
-    C = ast.literal_eval(var_value[var_name.index('C')])               # SVR hyperparameter
-    epsilon = ast.literal_eval(var_value[var_name.index('epsilon')])   # SVR hyperparameter
+    C = ast.literal_eval(var_value[var_name.index('C')])                 # SVR hyperparameter
+    epsilon = ast.literal_eval(var_value[var_name.index('epsilon')])     # SVR hyperparameter
     optimize_hyperparams = ast.literal_eval(var_value[var_name.index('optimize_hyperparams')])# whether hyperparameters are optimized (T) or just use initial values (F). If hyperparam=0.0, then that one is not optimized
-    alpha_lim  = ast.literal_eval(var_value[var_name.index('alpha_lim')])     # range in which alpha hyperparam is optimized (only used for KRR)
-    gamma_el_lim = ast.literal_eval(var_value[var_name.index('gamma_el_lim')])    # range in which gamma_el is optimized
+    alpha_lim  = ast.literal_eval(var_value[var_name.index('alpha_lim')])       # range in which alpha hyperparam is optimized (only used for KRR)
+    gamma_el_lim = ast.literal_eval(var_value[var_name.index('gamma_el_lim')])  # range in which gamma_el is optimized
     gamma_d_lim = ast.literal_eval(var_value[var_name.index('gamma_d_lim')])    # range in which gamma_el is optimized
     gamma_a_lim = ast.literal_eval(var_value[var_name.index('gamma_a_lim')])    # range in which gamma_el is optimized
-    C_lim = ast.literal_eval(var_value[var_name.index('C_lim')])    # range in which C is optimized
+    C_lim = ast.literal_eval(var_value[var_name.index('C_lim')])                # range in which C is optimized
     epsilon_lim = ast.literal_eval(var_value[var_name.index('epsilon_lim')])    # range in which epsilon is optimized
-    db_file = ast.literal_eval(var_value[var_name.index('db_file')])    # name of input file with database
-    elec_descrip = ast.literal_eval(var_value[var_name.index('elec_descrip')])# number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
+    db_file = ast.literal_eval(var_value[var_name.index('db_file')])            # name of input file with database
+    #elec_descrip = ast.literal_eval(var_value[var_name.index('elec_descrip')]) # number of electronic descriptors: they must match the number in 'xcols', and be followed by the two structural descriptors
     xcols = []
-    xcols.append(ast.literal_eval(var_value[var_name.index('xcols_struc')]))              # specify which descriptors are used
-    for i in range(len(elec_descrip)):
+    elec_descrip = []
+    xcols.append(ast.literal_eval(var_value[var_name.index('xcols_struc')]))  # specify which descriptors are used
+    for i in range(number_elec_descrip):
         xcols.append(ast.literal_eval(var_value[var_name.index('xcols_elec'+str(i))]))              # specify which descriptors are used
+        elec_descrip.append(len(xcols[i+1]))
     ycols = ast.literal_eval(var_value[var_name.index('ycols')])              # specify which is target property
     Ndata = ast.literal_eval(var_value[var_name.index('Ndata')])              # number of d/a pairs
     print_log = ast.literal_eval(var_value[var_name.index('print_log')])      # choose whether information is also written into a log file (Default: True)
@@ -234,7 +236,7 @@ def read_initial_values(inp):
     print('######################################')
     print('db_file = ', db_file)
     print('Ndata = ', Ndata)
-    print('elec_descrip = ', elec_descrip)
+    #print('elec_descrip = ', elec_descrip)
     print('xcols = ', xcols)
     print('ycols = ', ycols)
     print('FP_length = ', FP_length)
@@ -282,7 +284,7 @@ def read_initial_values(inp):
         f_out.write('######################################')
         f_out.write('db_file %s\n' % str(db_file))
         f_out.write('Ndata %s\n' % str(Ndata))
-        f_out.write('elec_descrip %s\n' % str(elec_descrip))
+        #f_out.write('elec_descrip %s\n' % str(elec_descrip))
         f_out.write('xcols %s\n' % str(xcols))
         f_out.write('ycols %s\n' % str(ycols))
         f_out.write('FP_length %s\n' % str(FP_length))
@@ -335,7 +337,6 @@ def preprocess_fn(X):
 def custom_distance(X1,X2,gamma_el,gamma_d,gamma_a):
     d_el = []
     distance = 0.0
-    #d_fp=0.0
     # Calculate distances for FP
     elec_descrip_total=0
     for k in elec_descrip:
