@@ -22,9 +22,9 @@ log_name  = 'log_ML_d_a.log'         # name of log file
 ######################################
 # Any number of electronic descriptors can be specified, classified in any group. Use notation: xcols_elec0, xcols_elec1 etc.
 db_file = 'db_new.csv'               # name of input file with database
-Ndata = 66                          # number of d/a pairs
+Ndata = 56                           # number of d/a pairs
 xcols_struc = ["SMILES-DFP","SMILES-AFP"]                    # name of descriptors that will be affected by gamma_d and gamma_a, respectively
-xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A"] # name of descriptors affected by gamma_el[0]
+xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","sum of f-D","XLOGP3-D","sum of f-A","XLOGP3-A"] # name of descriptors affected by gamma_el[0]
 xcols_elec1 = ["sum of f-D", "sum of f-A"]                   # name of descriptors affected by gamma_el[1]
 xcols_elec2 = ["XLOGP3-D","XLOGP3-A"]                        # name of descriptors affected by gamma_el[2]
 ycols = [ "PCE" ]               	    # name of target property
@@ -32,16 +32,16 @@ FP_length = 2048						    # number of entries of each fingerprint
 ######################################
 # Machine Learning Algorithm options #
 ######################################
-ML = 'SVR'                           # 'kNN' or 'KRR' or 'SVR'
+ML = 'kNN'                           # 'kNN' or 'KRR' or 'SVR'
 CV = 'loo'                           # select 'loo' or 'kf'
 kfold = 2                            # only used uf CV=kf
 plot_target_predictions = 'PCE_values.jpeg' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
 ### General hyperparameters ##########
 optimize_hyperparams = False    	    # whether hyperparameters are optimized (True) or just use initial values (False). If gamma_X=0.0, then that hyperparam is not optimized anyway
-gamma_el = [1.0,1.0,1.0]             # hyperparameters with weights of d_el
-gamma_d  = 1.0                       # hyperparameter with weight of d_fp_d
-gamma_a  = 1.0                       # hyperparameter with weight of d_fp_a
-gamma_el_lim = [ (0.0, 2.0), (0.0,2.0), (0.0,2.0) ] # range in which each gamma_el is optimized
+gamma_el = [0.39896344,0.0,0.0]          # hyperparameters with weights of d_el
+gamma_d  = 4.17899646                # hyperparameter with weight of d_fp_d
+gamma_a  = 0.63391921                # hyperparameter with weight of d_fp_a
+gamma_el_lim = [(0.0, 2.0),(0.0, 2.0),(0.0, 2.0)] # range in which each gamma_el is optimized
 gamma_d_lim  = (0.0, 6.0)         	 # range in which gamma_d is optimized
 gamma_a_lim  = (0.0, 6.0)         	 # range in which gamma_a is optimized
 weight_RMSE = 'linear'               # select one: 'linear', 'PCE', 'PCE2'. Default: 'linear'
