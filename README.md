@@ -28,10 +28,10 @@ The following packages are used:
 
 All input parameters are specified in file: _inputMLPhotovoltaics.inp_, although this can be editted in main program _MachineLearningPhotovoltaics.py_. Input options are separated in different groups:
 
-- **Parallelization**: only relevant when trying to use differential evolution algorithm to optimize hyperparameters
-- **Verbose options**: allows some flexibility for how much information to print to standard output and log file
-- **Data base options**: allows to select how many donor/acceptor pairs are used, as well as which descriptors are considered
-- **Machine Learning Algorithm options**: allows to select what ML algorithm is used (whether kNN, KRR or SVR), as well as cross validation method, hyperparameters etc.
+- Parallelization: only relevant when trying to use differential evolution algorithm to optimize hyperparameters
+- Verbose options: allows some flexibility for how much information to print to standard output and log file
+- Data base options: allows to select how many donor/acceptor pairs are used, as well as which descriptors are considered
+- Machine Learning Algorithm options: allows to select what ML algorithm is used (whether kNN, KRR or SVR), as well as cross validation method, hyperparameters etc.
 
 To execute program, make sure that you have all necessary python packages installed, and that all necessary files are present: the database (_database.csv_), input file (_inputMLPhotovoltaics.inp_) and program (_MLPhotovoltaics.py_). Finally, simple run:
 
