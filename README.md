@@ -1,8 +1,8 @@
 # Machine Learning Photovoltaics
 
-Supplementary information for **Effect of increasing the descriptor set on machine learning prediction of small-molecule-based organic solar cells**, by _Z-W Zhao, M del Cueto, Y Geng and A Troisi_
+Supplementary information for **Effect of increasing the descriptor set on machine learning prediction of small-molecule-based organic solar cells**, by _Z-W Zhao, M del Cueto, Y Geng and A Troisi_.
 
-The **MLPhotovoltaics.py** program allows to calculate _r<sub>pearson</sub>_ and _RMSE_ with different machine learning (ML) algorithms, given a set of descriptors of several donor/acceptor pairs of organic solar cells, compiled in **database.csv**. It allows to use different ML algorithms, descriptors, and optimize all corresponding hyperparameters. More information is provided in main text of the article and the electronic supporting information.
+The **MLPhotovoltaics.py** program allows to predict the power conversion efficiency (and other target properties) with different machine learning (ML) algorithms, given a set of descriptors of several donor/acceptor pairs of organic solar cells, compiled in **database.csv**. The code allows to use different ML algorithms, descriptors, and optimize all corresponding hyperparameters. More information is provided in main text of the article and the electronic supporting information.
 
 ---
 

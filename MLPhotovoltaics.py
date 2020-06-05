@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Marcos del Cueto
-# Department of Chemistry and MIF, University of Liverpool
+# Department of Chemistry and Materials Innovation Factory, University of Liverpool
 # For any queries about the code: m.del-cueto@liverpool.ac.uk
 #################################################################################
 import re
