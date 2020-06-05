@@ -1,0 +1,60 @@
+#######################################
+### File containing input options for MLPhotovoltaics.py
+### The name of this file can be changed, but then also need to update 'input_file_name' in ML_d_a.py
+### Lines that start with '#' are ignored. All comments after '#' are ignored. Empty lines are ignored
+### Options can be in any order
+#######################################
+#######################################
+########## Parallelization ############
+#######################################
+NCPU = 1                              # select number of CPUs (-1 means all CPUs in a node) (ONLY USED IF "optimize_hyperparams = True")
+#######################################
+############ Verbose options ##########
+#######################################
+print_log = True                	     # choose whether information is also written into a log file (Default: True)
+log_name  = 'log_MLPhotovoltaics.log' # name of log file
+print_progress_every_x_percent =  10  # print progress in standard output at different interval
+#######################################
+######### Data base options ###########
+#######################################
+## Any number of electronic (physical) descriptors can be specified, classified in any number of groups. Use notation: xcols_elec0, xcols_elec1 etc.
+## Each of these groups can contain any number of descriptors, but the total number of groups should be the same as
+## the length of 'gamma_el' and 'gamma_el_lim', specified in 'Machine Learning Algorithm options'. Each of these gammas
+## controls the weight of each group of descriptors
+#######################################
+db_file = 'database.csv'              # name of input file with database
+Ndata =  566                          # number of d/a pairs
+xcols_struc = ["SMILES-DFP","SMILES-AFP"]                    # name of descriptors that will be affected by gamma_d and gamma_a, respectively
+xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A"] # name of descriptors affected by gamma_el[0]
+#xcols_elec1 = ["sum of f-D", "sum of f-A"]                  # name of descriptors affected by gamma_el[1]
+#xcols_elec2 = ["XLOGP3-D","XLOGP3-A"]                       # name of descriptors affected by gamma_el[2]
+ycols = [ "PCE" ]               	     # name of target property
+FP_length = 2048						     # number of entries of each fingerprint
+#######################################
+# Machine Learning Algorithm options ##
+#######################################
+ML = 'kNN'                            # 'kNN' or 'KRR' or 'SVR'
+CV = 'loo'                            # select 'loo' or 'kf'
+kfold = 2                             # only used uf CV=kf
+plot_target_predictions = 'Fig_6A.jpeg' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
+### General hyperparameters ###########
+optimize_hyperparams = False    	     # whether hyperparameters are optimized (True) or just use initial values (False). If gamma_X=0.0, then that hyperparam is not optimized anyway
+gamma_el = [0.53851311]       		  # hyperparameters with weights of d_el
+gamma_d  = 3.38506203         		  # hyperparameter with weight of d_fp_d
+gamma_a  = 0.85039285         		  # hyperparameter with weight of d_fp_a
+gamma_el_lim = [(0.0, 2.0)] 			  # range in which each gamma_el is optimized
+gamma_d_lim  = (0.0, 6.0)         	  # range in which gamma_d is optimized
+gamma_a_lim  = (0.0, 6.0)         	  # range in which gamma_a is optimized
+weight_RMSE = 'linear'                # select one: 'linear', 'PCE', 'PCE2'. Default: 'linear'
+### k-Nearest Neighbors ('kNN') #######
+Neighbors = 3                         # number of nearest-neighbors
+plot_kNN_distances = None 				  # decide filename for graph of kNN-distances vs rmse at each CV step is printed. If None, it is not plotted
+### Kernel Ridge Regression ('KRR') ###
+alpha = 1.0                           # kernel hyperparameter
+alpha_lim  = (0.0, 2.0)         	     # range in which alpha hyperparam is optimized
+### Support Vector Regression ('SVR')##
+C = 1.0                               # regularization hyperparameter
+epsilon = 0.1                         # epsilon-SVR
+C_lim = (0.01,10)                     # range in which C is optimized
+epsilon_lim = (0.001,10)              # range in which epsilon is optimized
+#######################################

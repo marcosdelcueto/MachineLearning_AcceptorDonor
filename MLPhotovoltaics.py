@@ -14,14 +14,14 @@ import matplotlib.pyplot as plt
 from matplotlib import ticker, gridspec, cm
 from math import sqrt
 from time import time
+from scipy.optimize import differential_evolution
+from scipy.stats import pearsonr, spearmanr
 from sklearn.svm import SVR
 from sklearn.model_selection import KFold
-from scipy.stats import pearsonr, spearmanr
 from sklearn.kernel_ridge import KernelRidge
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import LeaveOneOut
 from sklearn.preprocessing import StandardScaler
-from scipy.optimize import differential_evolution
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import train_test_split
 from sklearn.metrics.pairwise import euclidean_distances
@@ -30,10 +30,10 @@ from sklearn.neighbors import KNeighborsRegressor, DistanceMetric
 #from rdkit import Chem, DataStructs
 #from rdkit.Chem import rdMolDescriptors
 #################################################################################
-####### START CUSTOMIZABLE PARAMETERS #######
-input_file_name = 'input_ML_d_a.txt'  # name of input file
+######## START CUSTOMIZABLE PARAMETERS ########
+input_file_name = 'inputMLPhotovoltaics.inp'  # name of input file
 # The rest of input options are inside the specified file
-#######  END CUSTOMIZABLE PARAMETERS  #######
+########  END CUSTOMIZABLE PARAMETERS  ########
 #################################################################################
 
 #################################################################################
