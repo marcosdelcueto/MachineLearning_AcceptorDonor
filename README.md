@@ -4,6 +4,8 @@ Supplementary information for **Effect of increasing the descriptor set on machi
 
 This program allows to calculate _r<sub>pearson</sub>_ and _RMSE_ with different machine learning (ML) algorithms, given a set of descriptors of several donor/acceptor pairs of organic solar cells. It allows to use different ML algorithms, descriptors, and optimize all corresponding hyperparameters. More information is provided in main text of the article and the electronic supporting information.
 
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -36,6 +38,8 @@ To execute program, make sure that you have all necessary python packages instal
 $> ./MLPhotovoltaics.py
 
 The provided input file already has the corresponding options to reproduce Figure 6A of the article: 5D<sub>ph</sub>+2D<sub>fp</sub> descriptors, with kNN (k=3), for hyperparameters already optimized.
+
+---
 
 ### Contributors
 
