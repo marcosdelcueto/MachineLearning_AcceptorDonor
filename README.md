@@ -33,9 +33,11 @@ All input parameters are specified in file: _inputMLPhotovoltaics.inp_, although
 - Data base options: allows to select how many donor/acceptor pairs are used, as well as which descriptors are considered
 - Machine Learning Algorithm options: allows to select what ML algorithm is used (whether kNN, KRR or SVR), as well as cross validation method, hyperparameters etc.
 
-To execute program, make sure that you have all necessary python packages installed, and that all necessary files are present: the database (_database.csv_), input file (_inputMLPhotovoltaics.inp_) and program (_MLPhotovoltaics.py_). Finally, simple run:
+To execute program, make sure that you have all necessary python packages installed, and that all necessary files are present: the database (_database.csv_), input file (_inputMLPhotovoltaics.inp_) and program (_MLPhotovoltaics.py_). Finally, simply run:
 
-$> ./MLPhotovoltaics.py
+```
+./MLPhotovoltaics.py
+```
 
 The provided input file already has the corresponding options to reproduce Figure 6A of the article: 5D<sub>ph</sub>+2D<sub>fp</sub> descriptors, with kNN (k=3), for hyperparameters already optimized.
 
