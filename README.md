@@ -2,7 +2,7 @@
 
 Supplementary information for **Effect of increasing the descriptor set on machine learning prediction of small-molecule-based organic solar cells**, by _Z-W Zhao, M del Cueto, Y Geng and A Troisi_
 
-This program allows to calculate _r<sub>pearson</sub>_ and _RMSE_ with different machine learning (ML) algorithms, given a set of descriptors of several donor/acceptor pairs of organic solar cells. It allows to use different ML algorithms, descriptors, and optimize all corresponding hyperparameters. More information is provided in main text of the article and the electronic supporting information.
+The **MLPhotovoltaics.py** program allows to calculate _r<sub>pearson</sub>_ and _RMSE_ with different machine learning (ML) algorithms, given a set of descriptors of several donor/acceptor pairs of organic solar cells, compiled in **database.csv**. It allows to use different ML algorithms, descriptors, and optimize all corresponding hyperparameters. More information is provided in main text of the article and the electronic supporting information.
 
 ---
 
@@ -26,7 +26,7 @@ The following packages are used:
 
 ### Usage
 
-All input parameters are specified in file: _inputMLPhotovoltaics.inp_, although this can be editted in main program _MachineLearningPhotovoltaics.py_. Input options are separated in different groups:
+All input parameters are specified in file: _inputMLPhotovoltaics.inp_. Input options in this file are separated in different groups:
 
 - Parallelization: only relevant when trying to use differential evolution algorithm to optimize hyperparameters
 - Verbose options: allows some flexibility for how much information to print to standard output and log file
@@ -39,7 +39,7 @@ To execute program, make sure that you have all necessary python packages instal
 ./MLPhotovoltaics.py
 ```
 
-The provided input file already has the corresponding options to reproduce Figure 6A of the article: 5D<sub>ph</sub>+2D<sub>fp</sub> descriptors, with kNN (k=3), for hyperparameters already optimized.
+The provided input file already has the corresponding options to reproduce Figure 6A of the article: 5D<sub>ph</sub>+2D<sub>fp</sub> descriptors, with kNN (k=3), for hyperparameter values already optimized.
 
 ---
 

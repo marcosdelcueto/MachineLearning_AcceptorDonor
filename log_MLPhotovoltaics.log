@@ -1,0 +1,41 @@
+##### START PRINT INPUT OPTIONS ######
+######################################
+########### Parallelization ##########
+######################################
+NCPU 1
+######################################
+############ Verbose options #########
+######################################
+print_log True
+log_name log_MLPhotovoltaics.log
+print_progress_every_x_percent 10
+######################################
+######### Data base options ##########
+######################################
+db_file database.csv
+Ndata 566
+xcols [['SMILES-DFP', 'SMILES-AFP'], ['HOMO-D', 'LUMO-D', 'LUMO-A', 'Reor-D', 'Reor-A']]
+ycols ['PCE']
+FP_length 2048
+######################################
+# Machine Learning Algorithm options #
+######################################
+ML kNN
+CV loo
+plot_target_predictions Fig_6A.jpeg
+### General hyperparameters ##########
+optimize_hyperparams False
+gamma_el [0.53851311]
+gamma_d 3.38506203
+gamma_a 0.85039285
+gamma_el_lim [(0.0, 2.0)]
+gamma_d_lim (0.0, 6.0)
+gamma_a_lim (0.0, 6.0)
+weight_RMSE linear
+### k-Nearest Neighbors ("kNN") ######
+Neighbors 3
+plot_kNN_distances None
+####### END PRINT INPUT OPTIONS ######
+Hyperparameters not optimizedNew kNN call: 
+gamma_el: [0.53851311], gamma_d: 3.385062 gamma_a: 0.850393, r: 0.724800, rmse: 1.682684 
+Process took 226.43 seconds

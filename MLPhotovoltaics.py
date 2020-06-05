@@ -142,7 +142,7 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
     ## Use initial hyperparameters
     elif optimize_hyperparams==False:
         condition='structure_and_electronic'
-        print('Hyperparameters not optimized')
+        print('Hyperparameters are not being optimized')
         # Print some info before running ML
         print('######################################')
         print('######################################')
@@ -151,7 +151,7 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
         print('Now starting ML')
         print('This may take several minutes')
         print('######################################')
-        if print_log==True: f_out.write('Hyperparameters not optimized')
+        if print_log==True: f_out.write('Hyperparameters are not being optimized \n')
         fixed_hyperparams = []
         if ML=='kNN': hyperparams=[gamma_el,gamma_d,gamma_a]
         if ML=='KRR': hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
