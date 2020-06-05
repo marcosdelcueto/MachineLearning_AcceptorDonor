@@ -39,4 +39,4 @@ The provided input file already has the corresponding options to reproduce Figur
 
 ### Contributors
 
-Zhi-Wen Zhang and Marcos del Cueto
+Zhi-Wen Zhao and Marcos del Cueto
