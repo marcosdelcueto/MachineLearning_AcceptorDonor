@@ -601,20 +601,20 @@ def kernel_SVR(_x1, _x2, gamma_el, gamma_d, gamma_a):
         # define Xi_fp_a
         Xi_fp_a = [[] for j in range(size_matrix1)]
         for i in range(size_matrix1):
-            for j in range(FP_length):
+            for j in range(FP_length,2*FP_length):
                 Xi_fp_a[i].append(_x1[i][j+elec_descrip_total])
         Xi_fp_a = np.array(Xi_fp_a)
         # define Xj_fp_a
         Xj_fp_a = [[] for j in range(size_matrix2)]
         for i in range(size_matrix2):
-            for j in range(FP_length):
+            for j in range(FP_length,2*FP_length):
                 Xj_fp_a[i].append(_x2[i][j+elec_descrip_total])
         Xj_fp_a = np.array(Xj_fp_a)
         # calculate K_fp_a
         Xii_a = np.repeat(np.linalg.norm(Xi_fp_a, axis=1, keepdims=True)**2, size_matrix2, axis=1)
         Xjj_a = np.repeat(np.linalg.norm(Xj_fp_a, axis=1, keepdims=True).T**2, size_matrix1, axis=0)
-        T_d = np.dot(Xi_fp_a, Xj_fp_a.T) / (Xii_a + Xjj_a - np.dot(Xi_fp_a, Xj_fp_a.T))
-        D_fp_a  = 1 - T_d
+        T_a = np.dot(Xi_fp_a, Xj_fp_a.T) / (Xii_a + Xjj_a - np.dot(Xi_fp_a, Xj_fp_a.T))
+        D_fp_a  = 1 - T_a
         D2_fp_a = np.square(D_fp_a)
         K_fp_a = np.exp(-gamma_a*D2_fp_a)
     # Calculate final kernel
