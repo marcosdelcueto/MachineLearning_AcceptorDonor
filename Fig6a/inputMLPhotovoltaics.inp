@@ -31,11 +31,18 @@ xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A"] # name of descripto
 ycols = [ "PCE" ]               	     # name of target property
 FP_length = 2048						     # number of entries of each fingerprint
 #######################################
+####### Learning Curve options ########
+#######################################
+lc_CV = 'kf'								  # select 'loo' or 'kf'
+lc_kfold = 5  								  # only used if lc_CV='kf'
+plot_lc = None		  						  # decide filename for learning curve graph. If None, it is not plotted
+#######################################
 # Machine Learning Algorithm options ##
 #######################################
 ML = 'kNN'                            # 'kNN' or 'KRR' or 'SVR'
-CV = 'loo'                            # select 'loo' or 'kf'
+CV = 'loo'                            # select 'loo' or 'kf' or 'last'
 kfold = 2                             # only used uf CV=kf
+Nlast = 10                            # only used if CV='last'
 plot_target_predictions = 'Fig6a.png' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
 ### General hyperparameters ###########
 optimize_hyperparams = False    	     # whether hyperparameters are optimized (True) or just use initial values (False). If gamma_X=0.0, then that hyperparam is not optimized anyway

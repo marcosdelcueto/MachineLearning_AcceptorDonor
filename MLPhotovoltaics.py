@@ -17,15 +17,12 @@ from time import time
 from scipy.optimize import differential_evolution
 from scipy.stats import pearsonr, spearmanr
 from sklearn.svm import SVR
-from sklearn.model_selection import KFold
 from sklearn.kernel_ridge import KernelRidge
-from sklearn.metrics import mean_squared_error
-from sklearn.model_selection import LeaveOneOut
+from sklearn.metrics import mean_squared_error,make_scorer
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import train_test_split
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.neighbors import KNeighborsRegressor, DistanceMetric
+from sklearn.model_selection import StratifiedKFold, train_test_split, learning_curve, LeaveOneOut, KFold
 #import rdkit
 #from rdkit import Chem, DataStructs
 #from rdkit.Chem import rdMolDescriptors
@@ -297,6 +294,9 @@ def read_initial_values(inp):
     Nlast = ast.literal_eval(var_value[var_name.index('Nlast')])
     plot_target_predictions = ast.literal_eval(var_value[var_name.index('plot_target_predictions')])
     plot_kNN_distances = ast.literal_eval(var_value[var_name.index('plot_kNN_distances')])
+    lc_CV = ast.literal_eval(var_value[var_name.index('lc_CV')])
+    lc_kfold = ast.literal_eval(var_value[var_name.index('lc_kfold')])
+    plot_lc = ast.literal_eval(var_value[var_name.index('plot_lc')])
 
     # Perform sanity check to see that the dimension of gamma_el and gamma_el_lim is the same as the number of xcols_elecX
     if number_elec_descrip != len(gamma_el) or number_elec_descrip != len(gamma_el_lim):
@@ -329,6 +329,13 @@ def read_initial_values(inp):
     print('xcols = ', xcols)
     print('ycols = ', ycols)
     print('FP_length = ', FP_length)
+    if plot_lc != None:
+        print('#######################################')
+        print('####### Learning Curve options ########')
+        print('#######################################')
+        print('lc_CV =',lc_CV)
+        print('lc_kfold =',lc_kfold)
+        print('plot_lc =',plot_lc)
     print('######################################')
     print('# Machine Learning Algorithm options #')
     print('######################################')
@@ -382,6 +389,13 @@ def read_initial_values(inp):
         f_out.write('xcols %s\n' % str(xcols))
         f_out.write('ycols %s\n' % str(ycols))
         f_out.write('FP_length %s\n' % str(FP_length))
+        if plot_lc != None:
+            f_out.write('#######################################\n')
+            f_out.write('####### Learning Curve options ########\n')
+            f_out.write('#######################################\n')
+            f_out.write('lc_CV %s\n' % str(lc_CV))
+            f_out.write('lc_kfold %s\n' % str(lc_kfold))
+            f_out.write('plot_lc %s\n' % str(plot_lc))
         f_out.write('######################################\n')
         f_out.write('# Machine Learning Algorithm options #\n')
         f_out.write('######################################\n')
@@ -415,7 +429,7 @@ def read_initial_values(inp):
             f_out.write('epsilon_lim %s\n' % str(epsilon_lim))
         f_out.write('####### END PRINT INPUT OPTIONS ######\n')
 
-    return (ML,Neighbors,alpha,gamma_el,gamma_d,gamma_a,C,epsilon,optimize_hyperparams,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances,print_progress_every_x_percent,Nlast)
+    return (ML,Neighbors,alpha,gamma_el,gamma_d,gamma_a,C,epsilon,optimize_hyperparams,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances,print_progress_every_x_percent,Nlast,lc_CV,lc_kfold,plot_lc)
 
 ### Preprocess function to scale data ###
 def preprocess_fn(X):
@@ -571,6 +585,18 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         ML_algorithm = KernelRidge(alpha=alpha, kernel=kernel)
     elif ML=='SVR':
         ML_algorithm = SVR(kernel=functools.partial(kernel_SVR, gamma_el=gamma_el, gamma_d=gamma_d, gamma_a=gamma_a), C=C, epsilon=epsilon)
+    ##############################################
+    # Learning Curve
+    if plot_lc != None:
+        mse = make_scorer(mean_squared_error)
+        if lc_CV=='kf':
+            cv=lc_kfold
+        if lc_CV=='loo':
+            loo = LeaveOneOut()
+            cv=loo
+        plot_learning_curve(ML_algorithm, X, y.ravel(), cv=cv, scoring=mse)
+        plt.savefig(plot_lc, dpi=300, bbox_inches='tight')
+    ##############################################
     # Initialize values
     y_predicted = []
     y_real = []
@@ -587,8 +613,6 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
     kNN_error = []
     if CV=='kf' or CV=='loo':
         for train_index, test_index in validation:
-            print('TEST train_index, test_index')
-            print(train_index, test_index)
             # Print progress
             if CV=='loo':
                 if counter == 0: print('Progress %.0f%s' %(0.0, '%'))
@@ -615,7 +639,6 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
             # add predicted values in this LOO to list with total
             y_predicted.append(y_pred.tolist())
             y_real.append(y_test.tolist())
-            #print('TEST', y_test.tolist(),y_pred.tolist())
     elif CV =='last':
         X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=Nlast,random_state=None,shuffle=False)
         # predict y values
@@ -631,7 +654,6 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         # add predicted values in this LOO to list with total
         y_predicted.append(y_pred.tolist())
         y_real.append(y_test.tolist())
-        #print('TEST', y_test.tolist(),y_pred.tolist())
     # Put results in a 1D list
     y_real_list=[]
     y_predicted_list=[]
@@ -648,8 +670,6 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         weights = y_real_list_list / np.linalg.norm(y_real_list_list) # weights proportional to PCE
     elif weight_RMSE == 'linear':
         weights = np.ones_like(y_real_list_list)
-    #print('TEST y_real_list_list:', y_real_list_list)
-    #print('TEST y_predicted_list_list:', y_predicted_list_list)
     r, _ = pearsonr(y_real_list_list, y_predicted_list_list)
     rms  = sqrt(mean_squared_error(y_real_list_list, y_predicted_list_list,sample_weight=weights))
     y_real_array=np.array(y_real_list_list)
@@ -1016,6 +1036,95 @@ def plot_scatter(x, y, plot_type, plot_name):
     #distance=distance**(1.0/2.0)
     #return distance
 
+# learning curve function adapted from Daniele Padula, with minor changes
+def plot_learning_curve(estimator, X, y, cv=None, n_jobs=None, scoring=None, train_sizes=np.linspace(0.2, 1.0, 5)):
+    """
+    Generate a simple plot of the test and training learning curve.
+
+    Parameters
+    ----------
+    estimator : object type that implements the "fit" and "predict" methods
+        An object of that type which is cloned for each validation.
+
+    X : array-like, shape (n_samples, n_features)
+        Training vector, where n_samples is the number of samples and
+        n_features is the number of features.
+
+    y : array-like, shape (n_samples) or (n_samples, n_features), optional
+        Target relative to X for classification or regression;
+        None for unsupervised learning.
+
+    cv : int, cross-validation generator or an iterable, optional
+        Determines the cross-validation splitting strategy.
+        Possible inputs for cv are:
+          - None, to use the default 3-fold cross-validation,
+          - integer, to specify the number of folds.
+          - :term:`CV splitter`,
+          - An iterable yielding (train, test) splits as arrays of indices.
+
+        For integer/None inputs, if ``y`` is binary or multiclass,
+        :class:`StratifiedKFold` used. If the estimator is not a classifier
+        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validators that can be used here.
+
+    n_jobs : int or None, optional (default=None)
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    train_sizes : array-like, shape (n_ticks,), dtype float or int
+        Relative or absolute numbers of training examples that will be used to
+        generate the learning curve. If the dtype is float, it is regarded as a
+        fraction of the maximum size of the training set (that is determined
+        by the selected validation method), i.e. it has to be within (0, 1].
+        Otherwise it is interpreted as absolute sizes of the training sets.
+        Note that for classification the number of samples usually have to
+        be big enough to contain at least one sample from each class.
+        (default: np.linspace(0.1, 1.0, 5))
+    """
+
+    fig = plt.figure(figsize=(19, 11.2))
+    gs = gridspec.GridSpec(1, 1)
+    ax = plt.subplot(gs[0])
+
+    _, train_scores, test_scores = learning_curve(estimator,X,y,cv=cv,n_jobs=n_jobs,train_sizes=train_sizes,scoring=scoring,shuffle=True)
+
+    train_sizes *= 100
+    train_scores_mean = np.mean(np.sqrt(train_scores), axis=1)
+    test_scores_mean = np.mean(np.sqrt(test_scores), axis=1)
+
+    if lc_CV == 'loo':
+        label_lc='LOO'
+    elif lc_CV == 'kf':
+        label_lc=str(lc_kfold)+'-fold'
+    train_scores_std = np.std(np.sqrt(train_scores), axis=1)
+    test_scores_std = np.std(np.sqrt(test_scores), axis=1)
+    if ML!='kNN':
+        ax.plot(train_sizes, train_scores_mean,'o-', markersize=15,color="r",label="Training")
+        ax.fill_between(train_sizes, train_scores_mean - train_scores_std,train_scores_mean + train_scores_std, alpha=0.1,color="r")
+    ax.plot(train_sizes, test_scores_mean, 'o-', markersize=15, color="g",label=label_lc)
+    ax.fill_between(train_sizes, test_scores_mean - test_scores_std,test_scores_mean + test_scores_std, alpha=0.1,color="g")
+
+    ax.set_xlabel("Training examples %", size=24)
+    ax.set_ylabel("RMSE", size=24)
+    ax.tick_params(axis='both', which='major', direction='in', labelsize=22, pad=10, length=5)
+    ax.tick_params(axis='both', which='minor', direction='in', labelsize=22, pad=10, length=2)
+    ax.xaxis.set_ticks_position('both')
+    ax.yaxis.set_ticks_position('both')
+    ax.grid()
+
+    ax.legend(fontsize=22, loc="best").draw_frame(False)
+
+    return plt
+
+
+
+
+
+
 ##### END OTHER FUNCTIONS ######
 ################################################################################
 ################################################################################
@@ -1023,7 +1132,7 @@ def plot_scatter(x, y, plot_type, plot_name):
 ### Run main program ###
 start = time()
 # Read input values
-(ML,Neighbors,alpha,gamma_el,gamma_d,gamma_a,C,epsilon,optimize_hyperparams,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances,print_progress_every_x_percent,Nlast) = read_initial_values(input_file_name)
+(ML,Neighbors,alpha,gamma_el,gamma_d,gamma_a,C,epsilon,optimize_hyperparams,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances,print_progress_every_x_percent,Nlast,lc_CV,lc_kfold,plot_lc) = read_initial_values(input_file_name)
 # Execute main function
 main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim)
 # Print running time and close log file

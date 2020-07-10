@@ -39,7 +39,7 @@ To execute program, make sure that you have all necessary python packages instal
 ./MLPhotovoltaics.py
 ```
 
-The provided input file already has the corresponding options to reproduce Figure 6A of the article: 5D<sub>ph</sub>+2D<sub>fp</sub> descriptors, with kNN (k=3), for hyperparameter values already optimized.
+The provided input file  in the folder Fig6a already has the corresponding options to reproduce Figure 6A of the article: 5D<sub>ph</sub>+2D<sub>fp</sub> descriptors, with kNN (k=3), for hyperparameter values already optimized.
 
 ---
 
