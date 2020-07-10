@@ -33,16 +33,16 @@ FP_length = 2048						     # number of entries of each fingerprint
 #######################################
 # Machine Learning Algorithm options ##
 #######################################
-ML = 'kNN'                            # 'kNN' or 'KRR' or 'SVR'
+ML = 'SVR'                            # 'kNN' or 'KRR' or 'SVR'
 CV = 'last'                           # select 'loo' or 'kf' or 'last'
 kfold = 2                             # only used if CV='kf'
 Nlast = 20                            # only used if CV='last'
-plot_target_predictions = 'Fig6a.png' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
+plot_target_predictions = None        # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
 ### General hyperparameters ###########
 optimize_hyperparams = False    	     # whether hyperparameters are optimized (True) or just use initial values (False). If gamma_X=0.0, then that hyperparam is not optimized anyway
-gamma_el = [0.5385]       		  			  # hyperparameters with weights of d_el
-gamma_d  = 3.3851         		  			  # hyperparameter with weight of d_fp_d
-gamma_a  = 0.8504         		  			  # hyperparameter with weight of d_fp_a
+gamma_el = [1.0]       		  			  # hyperparameters with weights of d_el
+gamma_d  =  1.0         		  			  # hyperparameter with weight of d_fp_d
+gamma_a  =  1.0         		  			  # hyperparameter with weight of d_fp_a
 gamma_el_lim = [(0.0, 2.0)] 			  # range in which each gamma_el is optimized
 gamma_d_lim  = (0.0, 6.0)         	  # range in which gamma_d is optimized
 gamma_a_lim  = (0.0, 6.0)         	  # range in which gamma_a is optimized

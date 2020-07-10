@@ -75,48 +75,122 @@ def main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d
         # Use just structural descriptors
         for i in range(len(elec_descrip)):
             if gamma_el[i]==0.0:
-                condition = 'structure'
-                print('Optimize hyperparameters using only structural descriptors')
-                if print_log==True: f_out.write('Optimize hyperparameters using only structural descriptors \n')
-                fixed_hyperparams = [gamma_el]
                 if ML=='kNN': 
-                    hyperparams = [gamma_d,gamma_a]                
-                    bounds = [gamma_d_lim] + [gamma_a_lim]
-                elif ML=='KRR':
-                    hyperparams = [gamma_d,gamma_a,alpha]
-                    bounds = [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
-                elif ML=='SVR':
-                    hyperparams = [gamma_d,gamma_a,C,epsilon]
-                    bounds = [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
+                    if gamma_d == 0.0 and gamma_a !=0.0:
+                        print('############################################################')
+                        print('Optimize hyperparameters using only structural_a descriptors')
+                        print('############################################################')
+                        if print_log==True: f_out.write('Optimize hyperparameters using only structural_a descriptors \n')
+                        condition = 'structure_a'
+                        fixed_hyperparams = [gamma_el,gamma_d]
+                        if ML=='kNN':
+                            hyperparams = [gamma_a]                
+                            bounds = [gamma_a_lim]
+                        elif ML=='KRR':
+                            hyperparams = [gamma_a,alpha]
+                            bounds = [gamma_a_lim] + [alpha_lim]
+                        elif ML=='SVR':
+                            hyperparams = [gamma_a,C,epsilon]
+                            bounds = [gamma_a_lim] + [C_lim] + [epsilon_lim]
+                    elif gamma_a == 0.0 and gamma_d !=0.0:
+                        print('############################################################')
+                        print('Optimize hyperparameters using only structural_d descriptors')
+                        print('############################################################')
+                        if print_log==True: f_out.write('Optimize hyperparameters using only structural_d descriptors \n')
+                        condition = 'structure_d'
+                        fixed_hyperparams = [gamma_el,gamma_a]
+                        if ML=='kNN':
+                            hyperparams = [gamma_d]                
+                            bounds = [gamma_d_lim]
+                        elif ML=='KRR':
+                            hyperparams = [gamma_d,alpha]
+                            bounds = [gamma_d_lim] + [alpha_lim]
+                        elif ML=='SVR':
+                            hyperparams = [gamma_d,C,epsilon]
+                            bounds = [gamma_d_lim] + [C_lim] + [epsilon_lim]
+                    else:
+                        print('############################################################')
+                        print('Optimize hyperparameters using only structural descriptors')
+                        print('############################################################')
+                        if print_log==True: f_out.write('Optimize hyperparameters using only structural descriptors \n')
+                        condition = 'structure'
+                        fixed_hyperparams = [gamma_el]
+                        if ML=='kNN':
+                            hyperparams = [gamma_d,gamma_a]                
+                            bounds = [gamma_d_lim] + [gamma_a_lim]
+                        elif ML=='KRR':
+                            hyperparams = [gamma_d,gamma_a,alpha]
+                            bounds = [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
+                        elif ML=='SVR':
+                            hyperparams = [gamma_d,gamma_a,C,epsilon]
+                            bounds = [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
                 break
         # Use just electronic (physical) descriptors
-        if gamma_d==0.0 and gamma_a==0.0 and condition != 'structure':
+        if gamma_d==0.0 and gamma_a==0.0 and condition != 'structure' and condition != 'structure_a' and condition != 'structure_d':
             condition='electronic'
+            print('############################################################')
             print('Optimize hyperparameters using only electronic (physical) descriptors')
+            print('############################################################')
             if print_log==True: f_out.write('Optimize hyperparameters using only electronic (physical) descriptors \n')
             fixed_hyperparams =[gamma_d,gamma_a]
             if ML=='kNN': 
                 hyperparams=[gamma_el]
                 bounds = gamma_el_lim
-            if ML=='KRR': 
+            elif ML=='KRR': 
                 hyperparams=[gamma_el,alpha]
                 bounds = gamma_el_lim + [alpha_lim]
-            if ML=='SVR': 
+            elif ML=='SVR': 
                 hyperparams=[gamma_el,C,epsilon]
                 bounds = gamma_el_lim + [C_lim] + [epsilon_lim]
         # Use both electronic and structural descriptors
-        elif condition != 'structure':
+        elif gamma_d==0.0 and condition != 'structure' and condition != 'structure_a' and condition != 'structure_d':
+            condition='structure_a_and_electronic'
+            print('############################################################')
+            print('Optimize hyperparameters using both structural_a and electronic (physical) descriptors')
+            print('############################################################')
+            if print_log==True: f_out.write('Optimize hyperparameters using both structural_a and electronic (physical) descriptors \n')
+            fixed_hyperparams = [gamma_d]
+            if ML=='kNN':
+                hyperparams=[gamma_el,gamma_a]
+                bounds = gamma_el_lim + [gamma_a_lim]
+            elif ML=='KRR':
+                hyperparams=[gamma_el,gamma_a,alpha]
+                bounds = gamma_el_lim + [gamma_a_lim] + [alpha_lim]
+            elif ML=='SVR':
+                hyperparams=[gamma_el,gamma_a,C,epsilon]
+                bounds = gamma_el_lim + [gamma_a_lim] + [C_lim] + [epsilon_lim]
+        # Print some info before running ML
+        elif gamma_a==0.0 and condition != 'structure' and condition != 'structure_a' and condition != 'structure_d':
+            condition='structure_d_and_electronic'
+            print('############################################################')
+            print('Optimize hyperparameters using both structural_d and electronic (physical) descriptors')
+            print('############################################################')
+            if print_log==True: f_out.write('Optimize hyperparameters using both structural_d and electronic (physical) descriptors \n')
+            fixed_hyperparams = [gamma_a]
+            if ML=='kNN':
+                hyperparams=[gamma_el,gamma_d]
+                bounds = gamma_el_lim + [gamma_d_lim]
+            elif ML=='KRR':
+                hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
+                bounds = gamma_el_lim + [gamma_d_lim] + [alpha_lim]
+            elif ML=='SVR':
+                hyperparams=[gamma_el,gamma_d,C,epsilon]
+                bounds = gamma_el_lim + [gamma_d_lim] + [C_lim] + [epsilon_lim]
+        # Print some info before running ML
+        elif condition != 'structure' and condition != 'structure_a' and condition != 'structure_d':
             condition='structure_and_electronic'
-            print('Optimize hyperparameters using both structural and electronic (physical) descriptors')
+            print('############################################################')
+            print('Optimize hyperparameters using both structural_d and electronic (physical) descriptors')
+            print('############################################################')
             if print_log==True: f_out.write('Optimize hyperparameters using both structural and electronic (physical) descriptors \n')
             fixed_hyperparams = []
             if ML=='kNN':
                 hyperparams=[gamma_el,gamma_d,gamma_a]
                 bounds = gamma_el_lim + [gamma_d_lim] + [gamma_a_lim]
-            if ML=='KRR':
+            elif ML=='KRR':
                 hyperparams=[gamma_el,gamma_d,gamma_a,alpha]
                 bounds = gamma_el_lim + [gamma_d_lim] + [gamma_a_lim] + [alpha_lim]
-            if ML=='SVR':
+            elif ML=='SVR':
                 hyperparams=[gamma_el,gamma_d,gamma_a,C,epsilon]
                 bounds = gamma_el_lim + [gamma_d_lim] + [gamma_a_lim] + [C_lim] + [epsilon_lim]
         # Print some info before running ML
@@ -423,6 +497,26 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         if ML=='SVR':
             C = hyperparams[2]
             epsilon = hyperparams[3]
+    elif condition=='structure_a':
+        gamma_el = fixed_hyperparams[0]
+        gamma_d = fixed_hyperparams[1]
+        gamma_a = hyperparams[0]
+
+        if ML=='KRR': 
+            alpha = hyperparams[1]
+        if ML=='SVR':
+            C = hyperparams[1]
+            epsilon = hyperparams[2]
+    elif condition=='structure_d':
+        gamma_el = fixed_hyperparams[0]
+        gamma_d = hyperparams[0]
+        gamma_a = fixed_hyperparams[1]
+
+        if ML=='KRR': 
+            alpha = hyperparams[1]
+        if ML=='SVR':
+            C = hyperparams[1]
+            epsilon = hyperparams[2]
     elif condition=='electronic':
         gamma_el = []
         counter=0
@@ -436,6 +530,28 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         if ML=='SVR':
             C = hyperparams[i+1]
             epsilon = hyperparams[i+2]
+    elif condition=='structure_a_and_electronic':
+        gamma_el = []
+        for i in range(len(elec_descrip)):
+            gamma_el.append(hyperparams[i])
+        gamma_d = fixed_hyperparams[0]
+        gamma_a = hyperparams[i+1]
+        if ML=='KRR':
+            alpha = hyperparams[i+2]
+        if ML=='SVR':
+            C = hyperparams[i+2]
+            epsilon = hyperparams[i+3]
+    elif condition=='structure_d_and_electronic':
+        gamma_el = []
+        for i in range(len(elec_descrip)):
+            gamma_el.append(hyperparams[i])
+        gamma_d = hyperparams[i+1]
+        gamma_a = fixed_hyperparams[0]
+        if ML=='KRR':
+            alpha = hyperparams[i+2]
+        if ML=='SVR':
+            C = hyperparams[i+2]
+            epsilon = hyperparams[i+3]
     elif condition=='structure_and_electronic':
         gamma_el = []
         for i in range(len(elec_descrip)):
@@ -501,10 +617,6 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
             y_real.append(y_test.tolist())
             #print('TEST', y_test.tolist(),y_pred.tolist())
     elif CV =='last':
-        if type(Nlast) == int:
-            print('Absolute number of samples at the end of dataset used for testing:', Nlast)
-        elif type(Nlast) == float:
-            print('Proportion of samples at the end of dataset used for testing:', Nlast)
         X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=Nlast,random_state=None,shuffle=False)
         # predict y values
         y_pred = ML_algorithm.fit(X_train, y_train.ravel()).predict(X_test)
@@ -552,11 +664,12 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         plot_scatter(kNN_distances_array, kNN_error_array, 'plot_kNN_distances', plot_kNN_distances)
     # Print results
     print('New', ML, 'call:')
-    print('gamma_el:', gamma_el, 'gamma_d:', gamma_d, 'gamma_a:', gamma_a, 'r:', r.tolist(), 'rmse:',rms,flush=True)
+    print('gamma_el:', gamma_el, 'gamma_d:', gamma_d, 'gamma_a:', gamma_a, 'r:', r, 'rmse:',rms,flush=True)
+    if ML=='KRR' or ML=='SVR': print('Method-specific hyperparameters', ML_algorithm.get_params('alpha'))
     if print_log==True: 
         f_out.write('New %s call: \n' %(ML))
-        f_out.write('gamma_el: %s, gamma_d: %f gamma_a: %f, r: %f, rmse: %f \n' %(str(gamma_el), gamma_d, gamma_a, r.tolist(), rms))
-        if ML=='KRR' or ML=='SVR': f_out.write('hyperparameters: %s \n' %(str(ML_algorithm.get_params())))
+        f_out.write('gamma_el: %s, gamma_d: %f gamma_a: %f, r: %f, rmse: %f \n' %(str(gamma_el), gamma_d, gamma_a, r, rms))
+        if ML=='KRR' or ML=='SVR': f_out.write('Method-specific hyperparameters: %s \n' %(str(ML_algorithm.get_params())))
         f_out.flush()
     return rms 
 
