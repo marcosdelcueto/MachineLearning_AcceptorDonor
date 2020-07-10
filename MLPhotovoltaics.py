@@ -220,6 +220,7 @@ def read_initial_values(inp):
     weight_RMSE = ast.literal_eval(var_value[var_name.index('weight_RMSE')])  # select number of CPUs (-1 means all CPUs in a node)
     CV = ast.literal_eval(var_value[var_name.index('CV')])
     kfold = ast.literal_eval(var_value[var_name.index('kfold')])
+    Nlast = ast.literal_eval(var_value[var_name.index('Nlast')])
     plot_target_predictions = ast.literal_eval(var_value[var_name.index('plot_target_predictions')])
     plot_kNN_distances = ast.literal_eval(var_value[var_name.index('plot_kNN_distances')])
 
@@ -260,6 +261,7 @@ def read_initial_values(inp):
     print('ML =', ML)
     print('CV =', CV)
     if CV == 'kf': print('kfold =', kfold)
+    if CV == 'last': print('Nlast =', Nlast)
     print('plot_target_predictions =', plot_target_predictions)
     print('### General hyperparameters ##########')
     print('optimize_hyperparams = ', optimize_hyperparams)
@@ -313,6 +315,7 @@ def read_initial_values(inp):
         f_out.write('CV %s\n' % str(CV))
         f_out.write('plot_target_predictions %s\n' % str(plot_target_predictions))
         if CV=='kf': f_out.write('kfold %s\n' % str(kfold))
+        if CV=='last': f_out.write('Nlast %s\n' % str(Nlast))
         f_out.write('### General hyperparameters ##########\n')
         f_out.write('optimize_hyperparams %s\n' % str(optimize_hyperparams))
         f_out.write('gamma_el %s\n' % str(gamma_el))
@@ -338,7 +341,7 @@ def read_initial_values(inp):
             f_out.write('epsilon_lim %s\n' % str(epsilon_lim))
         f_out.write('####### END PRINT INPUT OPTIONS ######\n')
 
-    return (ML,Neighbors,alpha,gamma_el,gamma_d,gamma_a,C,epsilon,optimize_hyperparams,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances,print_progress_every_x_percent)
+    return (ML,Neighbors,alpha,gamma_el,gamma_d,gamma_a,C,epsilon,optimize_hyperparams,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances,print_progress_every_x_percent,Nlast)
 
 ### Preprocess function to scale data ###
 def preprocess_fn(X):
@@ -466,20 +469,43 @@ def func_ML(hyperparams,X,y,condition,fixed_hyperparams):
         validation=loo.split(X)
     kNN_distances = []
     kNN_error = []
-    for train_index, test_index in validation:
-        # Print progress
-        if CV=='loo':
-            if counter == 0: print('Progress %.0f%s' %(0.0, '%'))
-            prog = (counter+1)*100/Ndata
-            if prog >= print_progress_every_x_percent*progress_count:
-                print('Progress %.0f%s' %(prog, '%'), flush=True)
-                progress_count = progress_count + 1
-        if CV=='kf':
-            print('Step',counter," / ", kfold,flush=True)
-        counter=counter+1
-        # assign train and test indeces
-        X_train,X_test=X[train_index],X[test_index]
-        y_train,y_test=y[train_index],y[test_index]
+    if CV=='kf' or CV=='loo':
+        for train_index, test_index in validation:
+            print('TEST train_index, test_index')
+            print(train_index, test_index)
+            # Print progress
+            if CV=='loo':
+                if counter == 0: print('Progress %.0f%s' %(0.0, '%'))
+                prog = (counter+1)*100/Ndata
+                if prog >= print_progress_every_x_percent*progress_count:
+                    print('Progress %.0f%s' %(prog, '%'), flush=True)
+                    progress_count = progress_count + 1
+            if CV=='kf':
+                print('Step',counter," / ", kfold,flush=True)
+            counter=counter+1
+            # assign train and test indeces
+            X_train,X_test=X[train_index],X[test_index]
+            y_train,y_test=y[train_index],y[test_index]
+            # predict y values
+            y_pred = ML_algorithm.fit(X_train, y_train.ravel()).predict(X_test)
+            # if kNN: calculate lists with kNN_distances and kNN_error
+            if ML=='kNN':
+                provi_kNN_dist=ML_algorithm.kneighbors(X_test)
+                for i in range(len(provi_kNN_dist[0])):
+                    kNN_dist=np.mean(provi_kNN_dist[0][i])
+                    kNN_distances.append(kNN_dist)
+                error = [sqrt((float(i - j))**2) for i, j in zip(y_pred, y_test)]
+                kNN_error.append(error)
+            # add predicted values in this LOO to list with total
+            y_predicted.append(y_pred.tolist())
+            y_real.append(y_test.tolist())
+            #print('TEST', y_test.tolist(),y_pred.tolist())
+    elif CV =='last':
+        if type(Nlast) == int:
+            print('Absolute number of samples at the end of dataset used for testing:', Nlast)
+        elif type(Nlast) == float:
+            print('Proportion of samples at the end of dataset used for testing:', Nlast)
+        X_train, X_test, y_train, y_test = train_test_split(X,y,test_size=Nlast,random_state=None,shuffle=False)
         # predict y values
         y_pred = ML_algorithm.fit(X_train, y_train.ravel()).predict(X_test)
         # if kNN: calculate lists with kNN_distances and kNN_error
@@ -884,7 +910,7 @@ def plot_scatter(x, y, plot_type, plot_name):
 ### Run main program ###
 start = time()
 # Read input values
-(ML,Neighbors,alpha,gamma_el,gamma_d,gamma_a,C,epsilon,optimize_hyperparams,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances,print_progress_every_x_percent) = read_initial_values(input_file_name)
+(ML,Neighbors,alpha,gamma_el,gamma_d,gamma_a,C,epsilon,optimize_hyperparams,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim,db_file,elec_descrip,xcols,ycols,Ndata,print_log,log_name,NCPU,f_out,FP_length,weight_RMSE,CV,kfold,plot_target_predictions,plot_kNN_distances,print_progress_every_x_percent,Nlast) = read_initial_values(input_file_name)
 # Execute main function
 main(alpha,gamma_el,gamma_d,gamma_a,C,epsilon,alpha_lim,gamma_el_lim,gamma_d_lim,gamma_a_lim,C_lim,epsilon_lim)
 # Print running time and close log file
