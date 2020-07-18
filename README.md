@@ -31,6 +31,8 @@ All input parameters are specified in file: _inputMLPhotovoltaics.inp_. Input op
 - Parallelization: only relevant when trying to use differential evolution algorithm to optimize hyperparameters
 - Verbose options: allows some flexibility for how much information to print to standard output and log file
 - Data base options: allows to select how many donor/acceptor pairs are used, as well as which descriptors are considered
+- Learning Curve options: allows to print learning curves with different CV methods, to visualize model learning performance
+- Output prediction csv: allows to print the actual and predicted target properties values of the test points
 - Machine Learning Algorithm options: allows to select what ML algorithm is used (whether kNN, KRR or SVR), as well as cross validation method, hyperparameters etc.
 
 To execute program, make sure that you have all necessary python packages installed, and that all necessary files are present: the database (_database.csv_), input file (_inputMLPhotovoltaics.inp_) and program (_MLPhotovoltaics.py_). Finally, simply run:
@@ -39,7 +41,8 @@ To execute program, make sure that you have all necessary python packages instal
 ./MLPhotovoltaics.py
 ```
 
-The provided input file  in the folder Fig6a already has the corresponding options to reproduce Figure 6A of the article: 5D<sub>ph</sub>+2D<sub>fp</sub> descriptors, with kNN (k=3), for hyperparameter values already optimized.
+### Example inputs
+The provided input files in folders Fig6a, Fig6b and Fig6c contain the corresponding options to reproduce all three panels of Figure 6 of the article: 5D<sub>ph</sub>+2D<sub>fp</sub>, 7-D-D<sub>ph</sub>+2D<sub>fp</sub> and 9D<sub>ph(5basic+2D+2A)</sub>+2D<sub>fp</sub> descriptors respectively, with kNN (k=3) and hyperparameter values already optimized.
 
 ---
 
