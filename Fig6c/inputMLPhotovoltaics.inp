@@ -25,7 +25,7 @@ print_progress_every_x_percent =  10  # print progress in standard output at dif
 db_file = 'database.csv'              # name of input file with database
 Ndata =  566                          # number of d/a pairs
 xcols_struc = ["SMILES-DFP","SMILES-AFP"]                    # name of descriptors that will be affected by gamma_d and gamma_a, respectively
-xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A"] # name of descriptors affected by gamma_el[0]
+xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","sum of f-D", "sum of f-A","XLOGP3-D","XLOGP3-A"] # name of descriptors affected by gamma_el[0]
 ycols = [ "PCE" ]               	     # name of target property
 FP_length = 2048						     # number of entries of each fingerprint
 #######################################
@@ -46,12 +46,12 @@ ML = 'kNN'                            # 'kNN' or 'KRR' or 'SVR'
 CV = 'loo'                            # select 'loo' or 'kf' or 'last'
 kfold = 5                             # only used if CV='kf'
 Nlast = 10                            # only used if CV='last'
-plot_target_predictions = 'Fig6a.png' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
+plot_target_predictions = 'Fig6c.png' # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
 ### General hyperparameters ###########
 optimize_hyperparams = False    	     # whether hyperparameters are optimized (True) or just use initial values (False). If gamma_X=0.0, then that hyperparam is not optimized anyway
-gamma_el = [0.5385]       		  		  # hyperparameters with weights of d_el
-gamma_d  = 3.3851         		  		  # hyperparameter with weight of d_fp_d
-gamma_a  = 0.8504         		  		  # hyperparameter with weight of d_fp_a
+gamma_el = [0.3835]       		  		  # hyperparameters with weights of d_el
+gamma_d  = 4.0445         		  		  # hyperparameter with weight of d_fp_d
+gamma_a  = 0.5520         		  		  # hyperparameter with weight of d_fp_a
 gamma_el_lim = [(0.0, 2.0)] 			  # range in which each gamma_el is optimized
 gamma_d_lim  = (0.0, 6.0)         	  # range in which gamma_d is optimized
 gamma_a_lim  = (0.0, 6.0)         	  # range in which gamma_a is optimized
