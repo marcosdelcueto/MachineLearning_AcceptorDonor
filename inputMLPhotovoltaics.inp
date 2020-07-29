@@ -25,9 +25,9 @@ print_progress_every_x_percent =  10  # print progress in standard output at dif
 db_file = 'database.csv'              # name of input file with database
 Ndata =  566                          # number of d/a pairs
 xcols_struc = ["SMILES-DFP","SMILES-AFP"]                    # name of descriptors that will be affected by gamma_d and gamma_a, respectively
-xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A","sum of f-D", "sum of f-A","XLOGP3-D","XLOGP3-A"] # name of descriptors affected by gamma_el[0]
-#xcols_elec1 = ["sum of f-D", "sum of f-A"]                  # name of descriptors affected by gamma_el[1]
-#xcols_elec2 = ["XLOGP3-D","XLOGP3-A"]                       # name of descriptors affected by gamma_el[2]
+xcols_elec0 = ["HOMO-D","LUMO-D","LUMO-A","Reor-D","Reor-A"] # name of descriptors affected by gamma_el[0]
+xcols_elec1 = ["sum of f-D", "sum of f-A"]                   # name of descriptors affected by gamma_el[1]
+xcols_elec2 = ["XLOGP3-D","XLOGP3-A"]                        # name of descriptors affected by gamma_el[2]
 ycols = [ "PCE" ]                     # name of target property
 FP_length = 2048						     # number of entries of each fingerprint
 #######################################
@@ -39,30 +39,30 @@ plot_lc = None		  						  # decide filename for learning curve graph. If None, i
 #######################################
 ####### Output prediction csv #########
 #######################################
-prediction_csv_file_name = 'prediction.csv' # Select None if no output prediction csv is wanted
-columns_labels_prediction_csv = []			  # Select extra labels to print in output prediction csv
+prediction_csv_file_name = 'pred.csv' # Select None if no output prediction csv is wanted
+columns_labels_prediction_csv = []	  # Select extra labels to print in output prediction csv
 #######################################
 # Machine Learning Algorithm options ##
 #######################################
-ML = 'SVR'                            # 'kNN' or 'KRR' or 'SVR'
+ML = 'kNN'                            # 'kNN' or 'KRR' or 'SVR'
 CV = 'loo'                            # select 'loo' or 'kf' or 'last'
-kfold = 5                             # only used if CV='kf'
+kfold = 3                             # only used if CV='kf'
 Nlast = 10                            # only used if CV='last'
-plot_target_predictions = "target.png" # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
+plot_target_predictions = "pred.png"  # decide filename for graph plotting predicted and actual values of target property. If None, it is not plotted
 ### General hyperparameters ###########
-optimize_hyperparams = True          # whether hyperparameters are optimized (True) or just use initial values (False). If gamma_X=0.0, then that hyperparam is not optimized anyway
-gamma_el = [0.0]       		      # hyperparameters with weights of d_el
-gamma_d  = 1.0              	      # hyperparameter with weight of d_fp_d
-gamma_a  = 2.0             	      # hyperparameter with weight of d_fp_a
-gamma_el_lim = [(0.0, 2.0)] 	      # range in which each gamma_el is optimized
+optimize_hyperparams = False          # whether hyperparameters are optimized (True) or just use initial values (False). If gamma_X=0.0, then that hyperparam is not optimized anyway
+gamma_el = [0.4792,0.0512,0.1104]     # hyperparameters with weights of d_el
+gamma_d  = 5.5437            	        # hyperparameter with weight of d_fp_d
+gamma_a  = 1.8608            	        # hyperparameter with weight of d_fp_a
+gamma_el_lim = [(0.0, 2.0),(0.0,2.0),(0.0,2.0)] # range in which each gamma_el is optimized
 gamma_d_lim  = (0.0, 6.0)             # range in which gamma_d is optimized
 gamma_a_lim  = (0.0, 6.0)             # range in which gamma_a is optimized
 weight_RMSE = 'linear'                # select one: 'linear', 'PCE', 'PCE2'. Default: 'linear'
 ### k-Nearest Neighbors ('kNN') #######
 Neighbors = 3                         # number of nearest-neighbors
-plot_kNN_distances = None 	      # decide filename for graph of kNN-distances vs rmse at each CV step is printed. If None, it is not plotted
+plot_kNN_distances = None 	           # decide filename for graph of kNN-distances vs rmse at each CV step is printed. If None, it is not plotted
 ### Kernel Ridge Regression ('KRR') ###
-alpha = 0.3                        # kernel hyperparameter
+alpha = 0.3                           # kernel hyperparameter
 alpha_lim  = (0.0, 2.0)               # range in which alpha hyperparam is optimized
 ### Support Vector Regression ('SVR')##
 C = 1.0                               # regularization hyperparameter
