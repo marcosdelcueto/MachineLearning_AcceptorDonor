@@ -1,6 +1,6 @@
 # Machine Learning Photovoltaics
 
-Supplementary information for **Effect of increasing the descriptor set on machine learning prediction of small-molecule-based organic solar cells**, by _Z-W Zhao, M del Cueto, Y Geng and A Troisi_.
+Supplementary information for [Effect of increasing the descriptor set on machine learning prediction of small-molecule-based organic solar cells](https://doi.org/10.1021/acs.chemmater.0c02325), by _Z-W Zhao, M del Cueto, Y Geng and A Troisi_.
 
 The **MLPhotovoltaics.py** program allows to predict the power conversion efficiency (and other target properties) with different machine learning (ML) algorithms, given a set of descriptors of several donor/acceptor pairs of organic solar cells, compiled in **database.csv**. The code allows to use different ML algorithms, descriptors, and optimize all corresponding hyperparameters. More information is provided in main text of the article and the electronic supporting information.
 
@@ -10,19 +10,10 @@ The **MLPhotovoltaics.py** program allows to predict the power conversion effici
 
 ### Prerequisites
 
-The following packages are used:
-
-- re
-- sys
-- ast
-- time
-- math
-- numpy
-- scipy
-- pandas
-- sklearn
-- functools
-- matplotlib
+The necessary packages (with the tested versions with Python 3.8.5) are specified in the file requirements.txt. These packages can be installed with pip:
+```
+pip3 install -r requirements.txt
+```
 
 ### Usage
 
@@ -35,10 +26,10 @@ All input parameters are specified in file: _inputMLPhotovoltaics.inp_. Input op
 - Output prediction csv: allows to print the actual and predicted target properties values of the test points
 - Machine Learning Algorithm options: allows to select what ML algorithm is used (whether kNN, KRR or SVR), as well as cross validation method, hyperparameters etc.
 
-To execute program, make sure that you have all necessary python packages installed, and that all necessary files are present: the database (_database.csv_), input file (_inputMLPhotovoltaics.inp_) and program (_MLPhotovoltaics.py_). Finally, simply run:
+To execute program, make sure that you have all necessary python packages installed, and that all necessary files are present: the database (**database.csv**), input file (**inputMLPhotovoltaics.inp**) and program (**MLPhotovoltaics.py**). Finally, simply run:
 
 ```
-./MLPhotovoltaics.py
+python MLPhotovoltaics.py
 ```
 
 ### Example inputs
@@ -46,6 +37,6 @@ The provided input files in folders Fig6a, Fig6b and Fig6c contain the correspon
 
 ---
 
-### Contributors
+### Authors
 
-Zhi-Wen Zhao and Marcos del Cueto
+Zhi-Wen Zhao, [Marcos del Cueto](https://github.com/marcosdelcueto), Y Geng and A Troisi
